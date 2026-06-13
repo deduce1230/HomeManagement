@@ -1,0 +1,44 @@
+@section('header')
+	<div class="inner">
+                <a href='/'>
+                <h1><img src="/favicon.ico" alt="HOME MANAGEMENT WEB">
+			HOME MANAGEMENT WEB
+		</h1>
+                </a>
+		<div class="spMenuWrap">
+			<div id="spMenu"><span id="navBtn"><span id="navBtnIcon"></span></span></div>
+		</div>
+		<nav class="gnav">
+			<ul>
+				<li><a href="/">ホーム</a></li>
+				<li class="subnav"><a href="/">献立くん</a>
+					<ul>
+						<li><a href="/cooking_index">メインメニュー</a></li>
+						<li><a href="/cooking/show">記録一覧</a></li>
+					</ul>
+				</li>
+				<li class="subnav"><a href="/">記録帳</a>
+					<ul>
+						<li><a href="/calendar/list">スケジュール一覧</a></li>
+						<li><a href="/hm_todo/list">TODOリスト</a></li>
+						<li><a href="/hm_twitter/tweet">一言日記</a></li>
+						<li><a href="/hm_twitter/tweet_show">　記録一覧</a></li>
+						<li><a href="/record/grid/{{date("Y")}}/{{date("m")}}">健康管理記録</a></li>
+						<li><a href="/stock/list">在庫管理記録</a></li>
+						<li><a href="/memories">思い出アルバム</a></li>
+						<li><a href="/archives/menu">(仮)書庫一覧</a></li>
+					</ul>
+				</li>
+				<li class="subnav"><a href="/">ゲームセンター</a>
+					<ul>
+						<li><a href="/test/game">チャレンジペンちゃん</a></li>
+						<li><a href="/test/game2">RETRO GAME CAFE</a></li>
+						<li><a href="/communication/push">WebPushテスト</a></li>
+						<li><a href="{{ route('bousaizyunbi_pdf') }}">PDFテスト</a></li>
+					</ul>
+				</li>
+			</ul>
+		</nav>
+	</div><!-- /.inner -->
+@endsection
+

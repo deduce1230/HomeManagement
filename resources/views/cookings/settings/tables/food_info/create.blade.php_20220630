@@ -1,0 +1,140 @@
+@extends('layouts.common')
+
+@section('title', 'HomeManagement Web')
+@section('keywords', 'naoshi,yuko')
+@section('description', '山下家の情報一括管理')
+
+@include('section.head')
+@include('section.header')
+
+@section('content')
+<div class="container mt-4">
+    <div class="border p-4">
+        <h1 class="h4 mb-4 font-weight-bold">
+            食材情報マスタの新規登録
+        </h1>
+
+        <form method="POST" action="{{ route('food_info.store') }}">
+            @csrf
+
+            <fieldset class="mb-4">
+                <div class="form-group">
+                    <label for="subject">
+                        食材ID
+                    </label>
+                    <input
+                        id="food_id"
+                        name="food_id"
+                        class="form-control {{ $errors->has('food_id') ? 'is-invalid' : '' }}"
+                        value="{{ old('food_id') }}"
+                        type="text"
+                    >
+                    @if ($errors->has('food_id'))
+                        <div class="invalid-feedback">
+                            {{ $errors->first('food_id') }}
+                        </div>
+                    @endif
+                </div>
+                <div class="form-group">
+                    <label for="subject">
+                        食材名
+                    </label>
+                    <input
+                        id="food_nm"
+                        name="food_nm"
+                        class="form-control {{ $errors->has('food_nm') ? 'is-invalid' : '' }}"
+                        value="{{ old('food_nm') }}"
+                        type="text"
+                    >
+                    @if ($errors->has('food_nm'))
+                        <div class="invalid-feedback">
+                            {{ $errors->first('food_nm') }}
+                        </div>
+                    @endif
+                </div>
+                <div class="form-group">
+                    <label for="subject">
+                        旬開始
+                    </label>
+                    <input
+                        id="season_s"
+                        name="season_s"
+                        class="form-control {{ $errors->has('season_s') ? 'is-invalid' : '' }}"
+                        value="{{ old('season_s') }}"
+                        type="text"
+                    >
+                    @if ($errors->has('season_s'))
+                        <div class="invalid-feedback">
+                            {{ $errors->first('season_s') }}
+                        </div>
+                    @endif
+                </div>
+                <div class="form-group">
+                    <label for="subject">
+                        旬終了
+                    </label>
+                    <input
+                        id="season_e"
+                        name="season_e"
+                        class="form-control {{ $errors->has('season_e') ? 'is-invalid' : '' }}"
+                        value="{{ old('season_e') }}"
+                        type="text"
+                    >
+                    @if ($errors->has('season_e'))
+                        <div class="invalid-feedback">
+                            {{ $errors->first('season_e') }}
+                        </div>
+                    @endif
+                </div>
+                <div class="form-group">
+                    <label for="subject">
+                        食材種別
+                    </label>
+                    <input
+                        id="type_id"
+                        name="type_id"
+                        class="form-control {{ $errors->has('type_id') ? 'is-invalid' : '' }}"
+                        value="{{ old('type_id') }}"
+                        type="text"
+                    >
+                    @if ($errors->has('type_id'))
+                        <div class="invalid-feedback">
+                            {{ $errors->first('type_id') }}
+                        </div>
+                    @endif
+                </div>
+                <div class="form-group">
+                    <label for="subject">
+                        参考URL
+                    </label>
+                    <input
+                        id="ref_url"
+                        name="ref_url"
+                        class="form-control {{ $errors->has('ref_url') ? 'is-invalid' : '' }}"
+                        value="{{ old('ref_url') }}"
+                        type="text"
+                    >
+                    @if ($errors->has('ref_url'))
+                        <div class="invalid-feedback">
+                            {{ $errors->first('ref_url') }}
+                        </div>
+                    @endif
+                </div>
+
+                <div class="mt-5">
+                    <a class="btn btn-secondary" href="{{ route('food_info.index') }}">
+                        キャンセル
+                    </a>
+
+                    <button type="submit" class="btn btn-primary">
+                        登録する
+                    </button>
+                </div>
+            </fieldset>
+        </form>
+    </div>
+</div>
+@endsection
+
+@include('section.footer')
+

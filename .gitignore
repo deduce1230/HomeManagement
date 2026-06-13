@@ -1,0 +1,7 @@
+/public/photos/
+/public/uploads/
+/public/videos/
+/storage/
+/vendor/
+node_modules/
+.env

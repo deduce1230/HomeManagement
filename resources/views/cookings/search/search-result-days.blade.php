@@ -1,0 +1,109 @@
+@extends('layouts.common')
+
+@section('title', 'HomeManagement Web')
+@section('keywords', 'naoshi,yuko')
+@section('description', '山下家の情報一括管理')
+@include('section.head')
+
+@include('section.header')
+
+@section('content')
+<h5><a href='javascript:history.back();'>検索結果({{$searched_word}})</a></h5>
+<div class="container">
+    <div class="justify-content-center">
+                <div class="panel-menu-vertical">
+            @foreach ($search_result as $row_record)
+            <?php $img = "/photos/recipes/".$row_record->recipe_id.".jpg"; 
+                  if (!file_exists(public_path($img))) {
+                       $img = "/photos/recipes/0.jpg";
+                  }
+            ?>
+            @if ($row_record->meal_date_order == $row_record->meal_date_count)
+                </div>
+                <h5>{{$row_record->meal_date}}({{$row_record->weekday}})【{{ $search_result_meal[$row_record->meal_date] }}】</h5>
+                <div class="panel-menu-vertical row">
+            @endif
+
+                    <?php //--- 食事別に背景色を変える --//
+                        switch ($row_record->meal_id){
+                             case 1:
+                                //-- 朝食--//
+                                $backcolor_frame = "style=background-color:#FCF094";
+                                $backcolor_image = "style=background-color:#E4D9C1";
+                                break;
+                             case 2:
+                                //-- 昼食--//
+                                $backcolor_frame = "style=background-color:#E1C22A";
+                                $backcolor_image = "style=background-color:#E5A229";
+                                break;
+                             case 3:
+                                //-- おやつ--//
+                                $backcolor_frame = "style=background-color:#E6C97B";
+                                $backcolor_image = "style=background-color:#C8B16D";
+                                break;
+                             case 4:
+                                //-- 夕食--//
+                                $backcolor_frame = "style=background-color:#9bcc9b";
+                                $backcolor_image = "style=background-color:darkseagreen";
+                                break;
+                             case 5:
+                                //-- 夜食--//
+                                $backcolor_frame = "style=background-color:#B5A4E0";
+                                $backcolor_image = "style=background-color:#806DB0";
+                                break;
+                             default:
+                                $backcolor_frame = "";
+                                $backcolor_image = "";
+                        }
+                    ?>
+
+
+		    <div class="panel-menu_item  panel-menu_item-view" {{$backcolor_frame}}>
+                          <div class="hm-div">
+                              <div class="setCenter" >
+				  <strong><font color="darkslategray">{{$row_record->meal_nm}}</font></strong>
+                              </div>
+                              <div class="setRight">
+			          <a href="/cooking/search_calendar_history/{{$row_record->recipe_id}}"
+                                                        class="btn-real" style="vertical-align:middle">
+                                      <i class="fas fa-list"></i>
+			          </a>
+                              </div>
+                          </div>
+
+			  <a href="/cooking/record/rec_meal/{{$row_record->recipe_id}}">
+                                <div class="panel-menu_item_img_food" {{$backcolor_image}}><img src={{$img}}></div>
+                          </a>
+                          <div class="caption">
+                              <a href="/cooking/show_detail/{{$row_record->recipe_id}}" class="btn-real">
+                                  <i class="fas fa-info"></i>
+                              </a>
+                              <a href="/cooking/record/rec_meal/{{$row_record->recipe_id}}" class="btn-real">
+                                  <i class="fas fa-utensils"></i>
+                              </a>
+                              @if ($row_record->ref_url == "#")
+                              <div class="btn-not-real">
+                                  <i class="fas fa-globe"></i>
+                              </div>
+                              @else
+                              <a href="{{$row_record->ref_url}}" class="btn-real">
+                                  <i class="fas fa-globe"></i>
+                              </a>
+                              @endif
+                          </div>
+                          <p> 
+                            {{$row_record->recipe_nm}} 
+                            @if ($row_record->eater_id > 0)
+                                <?php $eater=array('','(直)','(裕)'); $eater_color=array('','lightskyblue','lightpink'); ?>
+                                <span style="background:{{ $eater_color[$row_record->eater_id] }};">{{ $eater[$row_record->eater_id] }}</span>
+                            @endif
+                          </p>
+                    </div>
+            @endforeach
+                </div>
+    </div>
+
+</div>
+@endsection
+
+@include('section.footer')

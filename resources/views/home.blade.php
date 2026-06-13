@@ -1,0 +1,353 @@
+@extends('layouts.common')
+ 
+@section('title', 'HomeManagement Web')
+@section('keywords', 'naoshi,yuko')
+@section('description', '山下家の情報一括管理')
+
+@section('pageCss')
+  <link href="/css/lightbox/photos-style.css" rel="stylesheet" type="text/css">
+  <link rel="stylesheet" href="/css/lightbox/lightbox.css">
+  <script src="/js/lightbox/lightbox-plus-jquery.min.js"></script>
+@endsection
+
+@include('section.head')
+ 
+@include('section.header')
+ 
+@section('content')
+<div class="container">
+<!--
+    <div style="float:left; display: table-cell; vertical-align:middle; ">
+      <br><a href="/other_home/{{$the_day_before->format('Y-m-d')}}">
+          <i class="far fa-caret-square-left hm-pagenate"></i>
+          </a>
+    </div>
+-->
+    <a href="/weather/detail/{{$the_day}}" style="float:left">
+    <div id="home-header">
+       <div id ="home-header-1">
+            <div class="calendar_date_mm">{{ $the_day->month }}</div>
+            <div class="calendar_slash">/</div>
+            <div class="calendar_date_dd">{{ $the_day->day }}</div>
+            <?php $weekday = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']  ?>
+            <div class="calendar_date_ww">{{ $weekday[$the_day->dayOfWeek] }}</div>
+       </div>
+       <div id="home-header-2">
+            今日<br>
+            <img height='40px' src='{{ $file_name }}'>
+            @if (count($weather_reports) === 1)
+                <p>{{ $weather_reports[0]->max_temp }}℃</p>
+            @endif
+       </div>
+       <i class="fas fa-angle-double-right fa-4x my-color"></i>
+       <div id="home-header-2">
+            明日<br>
+            <img height='40px' src='{{ $file_name_tmrw }}'>
+            @if (count($weather_reports_tmrw) === 1)
+                <p>{{ $weather_reports_tmrw[0]->max_temp }}℃</p>
+            @endif
+       </div>
+    </div>
+    </a>
+    @if (!($the_day->isToday()))
+<!--
+    <div style="float:right; display: table-cell; vertical-align:middle; ">
+      <br><a href="/other_home/{{$the_day_after->format('Y-m-d')}}">
+          <i class="far fa-caret-square-right hm-pagenate"></i>
+          </a>
+    </div>
+-->
+    @endif
+
+
+    <div class="justify-content-start">
+            <!-- 今日のご飯 -->
+            <table class="table table-hover hm-table01">
+                <caption><h5>
+                            <div class="hm-div">
+                                <div class="setLeft">
+                                    <a href='/cooking_index'>今日のご飯({{ $cooking_kind }})</a>
+                                </div>
+                                <div class="setRight">
+                                    <a href="/cooking/search_menu" class="btn-real">
+                                        <i class="fas fa-search"></i>
+                                    </a>
+                                    <a href="/cooking/record/rec_meal/0/{{ $the_day->format('Y-m-d') }}" class="btn-real">
+                                        <i class="fas fa-plus"></i>
+                                    </a>
+                                    <a href="/cooking/show" class="btn-real">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </h5>
+                </caption>
+                <thead>
+                <tr>
+                    <th>食事</th>
+                    <th colspan=2>メニュー</th>
+                </tr>
+                </thead>
+                <tbody id="tbl">
+                @foreach ($cooking_shows as $cooking_show)
+                    <tr>
+                        @if ($cooking_show->meal_id_order === $cooking_show->meal_id_count)
+                        <td class="td-center" rowspan = {{ $cooking_show->meal_id_count }}>{{ $cooking_show->meal_nm }}</td>
+                        @endif
+                        <td class="td-no-right">
+                           @if ($cooking_show->ref_url != "#")
+                            <a href='{{ $cooking_show->ref_url }}' target='blank'>
+                           @endif
+                                {{ $cooking_show->recipe_nm }}
+                                @if ($cooking_show->eater_id > 0)
+                                    <?php $eater=array('','(直)','(裕)'); $eater_color=array('','lightskyblue','lightpink'); ?>
+                                    <span style="background:{{ $eater_color[$cooking_show->eater_id] }};">{{ $eater[$cooking_show->eater_id] }}</span>
+                                @endif
+                           @if ($cooking_show->ref_url != "#")
+                            </a>
+                           @endif
+                        </td>
+                        <td class="td-center td-no-left" width=30px>
+                            @if (file_exists(public_path('/photos/recipes/'.$cooking_show->recipe_id.'.jpg')))
+                                <a href="/cooking/show_detail/{{$cooking_show->recipe_id}}" class="btn-real">
+                                    <i class="fas fa-info"></i>
+                                </a>
+                            @else
+                                <a href="/cooking/show_detail/{{$cooking_show->recipe_id}}" class="btn-real">
+                                    <i class="fas fa-pen"></i>
+                                </a>
+                            @endif
+                        </td>
+                    </tr>
+                @endforeach
+                </tbody>
+            </table>
+
+            @if (count($alerts)>0)
+            <!-- TODOアラートはある時のみ表示 -->
+            <table class="table table-hover hm-table01 hm-table01-alert">
+                <caption><h5>
+                            <div class="hm-div">
+                                <div class="setLeft">
+                                    <a href='/cooking_index'>お知らせ</a>
+                                </div>
+<!--
+                                <div class="setRight">
+                                    <a href="#" class="btn-real">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+-->
+                                </div>
+                            </div>
+                        </h5>
+                </caption>
+                <thead>
+                <tr>
+                    <th>期限</th>
+                    <th>項目</th>
+                </tr>
+                </thead>
+                <tbody id="tbl">
+                @foreach ($alerts as $alert)
+                    <tr>
+                        <td class="td-center" width=110px>
+                           {{ $alert->limit_date }}
+                        </td>
+                        <td class="td-no-left">
+                          <div class="hm-div">
+                            <div class="setLeft">
+                              <a href="{{ $alert->url }}">
+                                {{ $alert->contents }}
+                              </a>
+                            </div>
+                            <div class="setRight">
+                    @if ($alert->ref_url)
+                              <a href="{{$alert->ref_url}}" class="btn-real">
+                                <i class="fas fa-globe"></i>
+                              </a>
+                    @else
+                              <div class="btn-not-real">
+                                <i class="fas fa-globe"></i>
+                              </div>
+                    @endif
+                            </div>
+                          </div>
+                        </td>
+                    </tr>
+                @endforeach
+                </tbody>
+            </table>
+            @endif
+
+            @if (count($calendars)>0)
+            <!-- 今日の予定はある時のみ表示 -->
+            <table class="table table-hover hm-table01">
+                <caption><h5>
+                            <div class="hm-div">
+                                <div class="setLeft">
+                                    <a href='/cooking_index'>今日の予定　</a>
+                                </div>
+                                <div class="setRight">
+                                    <a href="/calendar/list" class="btn-real">
+                                        <i class="fas fa-list"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </h5>
+                </caption>
+                <thead>
+                <tr>
+                    <th>開始時刻</th>
+                    <th>スケジュール内容</th>
+                    <th>対象</th>
+                </tr>
+                </thead>
+                <tbody id="tbl">
+                @foreach ($calendars as $calendar)
+                    <tr>
+                        <td class="td-center" width=80px>
+                           {{ $calendar->start_time }}
+                        </td>
+                        <td class="td-no-left">
+                         <?php //--重要予定は赤太字 終了は灰字
+                            if(strpos($calendar->event,'[!]') !== false){
+                              echo "<font color='red'>".str_replace('[!]','',$calendar->event)."</font>";
+                            }else if (strpos($calendar->event,'[C]') !== false) {
+                              echo "<font color='gray'>".str_replace('[C]','',$calendar->event)."</font>";
+                            }else {
+                              echo $calendar->event;
+                            }
+                         ?>
+                        </td>
+                        <td class="td-center" width=80px>
+                           {{ $calendar->owner }}
+                        </td>
+                    </tr>
+                @endforeach
+                </tbody>
+            </table>
+            @endif
+
+            <table class="table table-hover hm-table01">
+                <caption><h5>
+                            <div class="hm-div">
+                                <div class="setLeft">
+                                    <a href='/cooking_index'>今日の記録　</a>
+                                </div>
+                                <div class="setRight">
+                                    <a href="/hm_twitter/tweet_search" class="btn-real">
+                                        <i class="fas fa-search"></i>
+                                    </a>
+                                    <a href="/hm_twitter/tweet/{{ $the_day->format('Y-m-d') }}" class="btn-real">
+                                        <i class="fas fa-plus"></i>
+                                    </a>
+                                    <a href="/hm_twitter/tweet_show" class="btn-real">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </h5>
+                </caption>
+                <thead>
+                <tr>
+                    <th colspan=2>一言日記</th>
+                </tr>
+                </thead>
+                <tbody id="tbl">
+                @foreach ($tweets as $tweet)
+                    <tr>
+                        <td  class="td-center td-no-rightleft">
+                    @if (file_exists(public_path('/photos/diary/diary'.$tweet->rec_id.'.jpg')))
+                      <a href="{{ htmlspecialchars('/photos/diary/diary'.$tweet->rec_id.'.jpg') }}" data-lightbox="pics" class="btn-real">
+                    @else
+                      <a href="#" class="btn-not-real">
+                    @endif
+                        <i class="fas fa-tv"></i>
+                    </a>
+                        </td>
+                        <td class="td-no-left">
+                   @if ($tweet->ref_url != "")
+                    <a href='{{ $tweet->ref_url }}' target='blank'>
+                   @endif
+                            {{ $tweet->tweet }}
+                   @if ($tweet->ref_url != "")
+                    </a>
+                   @endif
+                        </td>
+                    </tr>
+                @endforeach
+                </tbody>
+            </table>
+
+    </div>
+
+</div>
+
+<script>
+<!-- 画面のフリックで前日・翌日表示にするスクリプト -->
+window.addEventListener("load", function(event) { 
+    var touchStartX;
+    var touchStartY;
+    var touchMoveX;
+    var touchMoveY;
+    var FLICK = 50;
+ 
+    window.addEventListener("touchstart", function(event) {
+
+    touchStartX = event.touches[0].pageX;
+    touchStartY = event.touches[0].pageY;
+    }, false);
+    
+    window.addEventListener("mousedown", function(event) {
+    //event.preventDefault();
+
+    touchStartX = event.screenX;
+    touchStartY = event.screenY;
+    }, false);
+    window.addEventListener("mousemove", function(event) {
+    event.preventDefault();
+
+    touchMoveX = event.screenX;
+    touchMoveY = event.screenY;
+    }, false);
+ 
+    window.addEventListener("touchend", function(event) {
+    touchMoveX = event.changedTouches[0].pageX;
+    touchMoveY = event.changedTouches[0].pageY;
+    if (touchStartX > touchMoveX) {
+        if (touchStartX > (touchMoveX +FLICK)) {
+        //前の牛
+        //console.log("touch start="+new Date().getTime()) ;
+        //moveCow(COW_INDEX+1) ;
+        window.location.href = '/other_home/{{$the_day_after->format('Y-m-d')}}';
+        }
+    } else if (touchStartX < touchMoveX) {
+        if ((touchStartX + FLICK) < touchMoveX) {
+        //console.log("touch start="+new Date().getTime()) ;
+        //moveCow(COW_INDEX-1) ;
+        window.location.href = '/other_home/{{$the_day_before->format('Y-m-d')}}';
+        }
+    }
+    }, false);
+    window.addEventListener("mouseup", function(event) {
+    touchMoveX = event.screenX;
+    touchMoveY = event.screenY;
+    if (touchStartX > touchMoveX) {
+        if (touchStartX > (touchMoveX +FLICK)) {
+        //前の牛
+        //moveCow(COW_INDEX+1) ;
+        window.location.href = '/other_home/{{$the_day_after->format('Y-m-d')}}';
+        }
+    } else if (touchStartX < touchMoveX) {
+        if ((touchStartX + FLICK) < touchMoveX) {
+        //moveCow(COW_INDEX-1) ;
+        window.location.href = '/other_home/{{$the_day_before->format('Y-m-d')}}';
+        }
+    }
+    }, false);
+}, false);
+</script>
+@endsection
+ 
+@include('section.footer')
+

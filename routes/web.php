@@ -1,0 +1,252 @@
+<?php
+
+/*
+|--------------------------------------------------------------------------
+| Web Routes
+|--------------------------------------------------------------------------
+|
+| Here is where you can register web routes for your application. These
+| routes are loaded by the RouteServiceProvider within a group which
+| contains the "web" middleware group. Now create something great!
+|
+*/
+
+/*
+Route::get('/', function () {
+    return view('home');
+});
+*/
+Route::get('/', 'HomeController@index')->name('home');
+
+/*
+|--------------------------------------------------------------------------
+| ログイン処理
+|--------------------------------------------------------------------------
+ */
+Auth::routes();
+//Auth::routes([‘register’ => false]);
+
+/*
+|--------------------------------------------------------------------------
+| ホーム画面
+|--------------------------------------------------------------------------
+ */
+Route::get('/home'             , 'HomeController@index'     )->name('home');
+Route::get('/other_home/{day}', 'HomeController@other_index');
+
+/*
+|--------------------------------------------------------------------------
+| 献立くん
+|--------------------------------------------------------------------------
+ */
+Route::get('/cooking_index',             'Cookings\CookingHomeController@cooking_index');
+
+//--設定画面
+Route::get('/cooking/setting',           'Cookings\CookingHomeController@cooking_setting');
+Route::get('/cooking/setting/table',     'Cookings\CookingHomeController@cooking_setting_table');
+
+//--記録画面
+Route::get('/cooking/record',            'Cookings\CookingHomeController@cooking_record');
+//-------新規登録画面（食事メニュー）-----
+Route::get('/cooking/record/rec_meal/{recipe_id}',   'Cookings\CookingHomeController@archive_index');
+Route::get('/cooking/record/rec_meal/{recipe_id}/{day}',   'Cookings\CookingHomeController@archive_index');
+Route::get('/cooking/record/rec_edit/{rec_id}/{recipe_id}',  'Cookings\CookingHomeController@archive_edit');
+
+//-------新規登録画面（レシピ）-----
+Route::get('/cooking/record/rec_recipe/{recipe_id}',   'Cookings\CookingHomeController@archive_index_recipe');
+
+Route::get('/cooking/show',              'Cookings\CookingHomeController@cooking_show');
+Route::get('/cooking/show_detail/{recipe_id}',  'Cookings\CookingHomeController@cooking_show_detail');
+Route::get('/cooking/edit_detail/{recipe_id}',  'Cookings\CookingHomeController@cooking_edit_detail');
+Route::post('/cooking/update_detail',           'Cookings\CookingHomeController@archive_edit_recipe_detail');
+
+//------メニュー編集・保存処理-----
+Route::post('/cooking/record/store_meal',  'Cookings\CookingHomeController@archive_store');
+Route::post('/cooking/record/update_meal', 'Cookings\CookingHomeController@archive_update');
+Route::get('/cooking/record/rec_del1/{rec_id}',              'Cookings\CookingHomeController@archive_delete1');
+Route::get('/cooking/record/rec_del2/{rec_id}/{recipe_id}',  'Cookings\CookingHomeController@archive_delete2');
+
+//------レシピ編集・保存処理-----
+Route::post('/cooking/record/store_recipe',  'Cookings\CookingHomeController@archive_store_recipe');
+
+//--検索画面
+Route::get('/cooking/search',            'Cookings\CookingHomeController@cooking_search');
+Route::get('/cooking/search_menu',       'Cookings\CookingHomeController@cooking_search_menu');
+Route::get('/cooking/search_menu/{search_word}',       'Cookings\CookingHomeController@cooking_search_menu');
+Route::get('/cooking/search_menu_days',       'Cookings\CookingHomeController@cooking_search_menu_days');
+Route::post('/cooking/search_exec',      'Cookings\CookingHomeController@cooking_search_exec');
+Route::get('/cooking/search_calendar/{start_date}/{end_date}',   'Cookings\CookingHomeController@cooking_search_callendar');
+Route::get('/cooking/search_calendar_history/{recipe_id}',   'Cookings\CookingHomeController@cooking_search_callendar_history');
+//--- 類似検索 ----
+Route::get('/cooking/similar_search',             'Cookings\CookingHomeController@cook_similar_search');
+Route::post('/cooking/similar_search_exec',       'Cookings\CookingHomeController@cooking_similar_search_exec');
+
+//--- ハッシュタグ検索 ----
+Route::get('/cooking/hashtag_search',             'Cookings\CookingHomeController@cook_hashtag_search');
+Route::post('/cooking/hashtag_search_exec',       'Cookings\CookingHomeController@cook_hashtag_search_exec');
+Route::get('/cooking/hashtag/get',                'Cookings\CookingHomeController@getHashtagData');
+
+//--- 食事提案 ----
+Route::get('/cooking/suggestion_menu/{target_date}/{order}',      'Cookings\CookingHomeController@suggestion_menu');
+
+//-- 食事分析 ---
+Route::get('/cooking/analysis/{date_s}/{date_e}',      'Cookings\CookingHomeController@cooking_analysis');
+Route::get('/cooking/food/{_food_nm}',      'Cookings\CookingHomeController@getFoodData');
+
+//-- 食品栄養素表示関連
+Route::get('/cooking/search_alias/{target_food_nm}/{recipe_id}/{search_word}','Cookings\CookingHomeController@search_alias');
+Route::get('/cooking/search_alias/{target_food_nm}/{recipe_id}',              'Cookings\CookingHomeController@search_alias');
+Route::get('/cooking/regist_alias/{food_id}/{target_food_nm}/{recipe_id}',  'Cookings\CookingHomeController@regist_alias');
+Route::get('/cooking/edit_foodnut/{food_id}',                         'Cookings\CookingHomeController@edit_foodnut');
+Route::get('/cooking/edit_foodnut/{food_id}/{pg_from}',               'Cookings\CookingHomeController@edit_foodnut');
+Route::post('/cooking/regist_foodnut',                    'Cookings\CookingHomeController@regist_foodnut');
+Route::get('/cooking/nut_info/{food_id}/{food_target}',        'Cookings\CookingHomeController@nut_info');
+Route::get('/cooking/nut_info/{food_id}/{food_target}/{pg_from}',   'Cookings\CookingHomeController@nut_info');
+Route::get('/cooking/nut_info/{food_id}/{food_target}/{pg_from}/{search_word}',   'Cookings\CookingHomeController@nut_info');
+Route::get('/cooking/get_nut_info/{food_id}/{jsd_id}',    'Cookings\CookingHomeController@get_nut_info');
+Route::get('/cooking/get_nut_info/{food_id}/{jsd_id}/{pg_from}',    'Cookings\CookingHomeController@get_nut_info');
+
+
+Route::get('/cooking/setting/table/food_info',    'Cookings\FoodInfoController@index');
+Route::post('/cooking/setting/table/food_info',    'Cookings\FoodInfoController@store');
+Route::get('/cooking/setting/table/food_info/create/{pg_from}/{food_target}',    'Cookings\FoodInfoController@create');
+Route::get('/cooking/setting/table/food_info/create/{pg_from}',    'Cookings\FoodInfoController@create');
+Route::delete('/cooking/setting/table/food_info/{food_id}',    'Cookings\FoodInfoController@destroy');
+Route::put('/cooking/setting/table/food_info/{food_id}',    'Cookings\FoodInfoController@update');
+Route::get('/cooking/setting/table/food_info/{food_id}',    'Cookings\FoodInfoController@show');
+Route::get('/cooking/setting/table/food_info/{food_id}/edit/{pg_from}',    'Cookings\FoodInfoController@edit');
+
+//-- 各テーブルCRUD設定
+Route::resource('/cooking/setting/table/food_type', 'Cookings\FoodTypeController', ['only' => ['index', 'show', 'create', 'store','edit', 'update', 'destroy']]);
+//Route::resource('/cooking/setting/table/food_info', 'Cookings\FoodInfoController', ['only' => ['index', 'show', 'create', 'store','edit', 'update', 'destroy']]);
+Route::resource('/cooking/setting/table/record', 'Cookings\RecordController', ['only' => ['index', 'show', 'create', 'store','edit', 'update', 'destroy']]);
+Route::resource('/cooking/setting/table/meal_type', 'Cookings\MealTypeController', ['only' => ['index', 'show', 'create', 'store','edit', 'update', 'destroy']]);
+Route::resource('/cooking/setting/table/meal_kind', 'Cookings\MealKindController', ['only' => ['index', 'show', 'create', 'store','edit', 'update', 'destroy']]);
+Route::resource('/cooking/setting/table/cooking_recipe', 'Cookings\CookingRecipeController', ['only' => ['index', 'show', 'create', 'store','edit', 'update', 'destroy']]);
+Route::resource('/cooking/setting/table/cooking', 'Cookings\CookingController', ['only' => ['index', 'show', 'create', 'store','edit', 'update', 'destroy']]);
+Route::resource('/cooking/setting/table/meal_category', 'Cookings\MealCategoryController', ['only' => ['index', 'show', 'create', 'store','edit', 'update', 'destroy']]);
+Route::resource('/cooking/setting/table/food_list', 'Cookings\FoodListController', ['only' => ['index', 'show', 'create', 'store','edit', 'update', 'destroy']]);
+Route::resource('/cooking/setting/table/dish_name', 'Cookings\DishNameController', ['only' => ['index', 'show', 'create', 'store','edit', 'update', 'destroy']]);
+Route::resource('/cooking/setting/table/cat_relation', 'Cookings\CatRelationController', ['only' => ['index', 'show', 'create', 'store','edit', 'update', 'destroy']]);
+
+/*----------------------------------------------------------
+  写真
+-----------------------------------------------------------*/
+Route::get('/memories',                              'HomeController@memories_home');
+Route::get('/memories/show/{photo_id}',              'HomeController@photos_show');
+
+/*----------------------------------------------------------
+  一言日記
+-----------------------------------------------------------*/
+Route::get('/hm_twitter/tweet',                    'HomeController@tweet');
+Route::get('/hm_twitter/tweet/{day}',              'HomeController@tweet');
+Route::post('/hm_twitter/tweet_rec',               'HomeController@tweet_store');
+Route::get('/hm_twitter/tweet_show',               'HomeController@tweet_show');
+Route::get('/hm_twitter/tweet_edit/{tweet_id}',    'HomeController@tweet_edit');
+Route::post('/hm_twitter/tweet_update',            'HomeController@tweet_update');
+Route::get('/hm_twitter/tweet_delete/{tweet_id}',  'HomeController@tweet_delete');
+Route::get('/hm_twitter/tweet_search',             'HomeController@tweet_search');
+Route::post('/hm_twitter/tweet_search_exec',       'HomeController@tweet_search_exec');
+Route::get('/hm_twitter/tweet_search_days',        'HomeController@tweet_search_days');
+Route::get('/hm_twitter/search_calendar/{start_date}/{end_date}',   'HomeController@tweet_search_callendar');
+
+//--- ハッシュタグ検索 ----
+Route::get('/hm_twitter/hashtag_search',             'HomeController@tweet_hashtag_search');
+Route::post('/hm_twitter/hashtag_search_exec',       'HomeController@tweet_hashtag_search_exec');
+Route::get('/hm_twitter/hashtag_instant_search/{search_word}',       'HomeController@tweet_hashtag_search_result');
+Route::get('/hm_twitter/hashtag/get',                'HomeController@getTweetHashtagData');
+
+
+/*----------------------------------------------------------
+  気象情報
+-----------------------------------------------------------*/
+Route::get('/weather/today',     'HomeController@weather_today');
+Route::get('/weather/detail/{day}',     'HomeController@weather_detail');
+
+/*----------------------------------------------------------
+  TODOリスト
+-----------------------------------------------------------*/
+Route::get('/hm_todo/list',                    'HomeController@hm_list');
+Route::get('/hm_todo/edit/{rec_id}',           'HomeController@hm_list_edit');
+Route::post('/hm_todo/list_store',             'HomeController@hm_list_store');
+Route::post('/hm_todo/list_update',            'HomeController@hm_list_update');
+Route::post('/hm_todo/list_update_one',        'HomeController@hm_list_update_one');
+
+/*----------------------------------------------------------
+  健康管理
+-----------------------------------------------------------*/
+//Route::get('/record/chart',             'DiaryRecordController@diaryRecordChart');
+Route::get('/record/chart/{targetYear}/{targetMonth}',             'DiaryRecordController@diaryRecordChart');
+//Route::get('/record/grid/{day_start}/{day_end}',             'DiaryRecordController@diaryRecordGrid');
+Route::get('/record/grid/{targetYear}/{targetMonth}',             'DiaryRecordController@diaryRecordGrid');
+Route::get('/record/chart/get_rec_data/{rec_kind}/{day_start}/{day_end}/{user_id}',    'DiaryRecordController@getRecordData');
+Route::post('/record/chart/set_rec_data',      'DiaryRecordController@setRecordData');
+
+/*----------------------------------------------------------
+  在庫管理
+-----------------------------------------------------------*/
+Route::get('/stock/list',                     'StockController@StockMenu');
+Route::get('/stock/list/{cat_id}',             'StockController@ListAdmin');
+Route::post('/stock/list_update',            'StockController@list_save');
+
+/*----------------------------------------------------------
+  予定管理
+-----------------------------------------------------------*/
+Route::get('/calendar/list',                     'HomeController@calendar_show');
+
+/*----------------------------------------------------------
+  PDF
+-----------------------------------------------------------*/
+Route::get('/archives/menu',                     'HomeController@archives_show');
+Route::get('/pdf/disaster_prevention/bousaizyunbi.pdf')->name('bousaizyunbi_pdf');
+Route::get('/pdf/disaster_prevention/suigaidosyasaigai.pdf')->name('suigaidosyasaigai_pdf');
+Route::get('/pdf/disaster_prevention/wagayanosonae.pdf')->name('wagayanosonae_pdf');
+Route::get('/pdf/events/TIME_TABLE.pdf')->name('bakery_timetable');
+Route::get('/pdf/news/annex_news_vol001.pdf')->name('annex001');
+Route::get('/pdf/news/annex_news_vol002.pdf')->name('annex002');
+Route::get('/pdf/news/annex_news_vol003.pdf')->name('annex003');
+Route::get('/pdf/news/annex_news_vol004.pdf')->name('annex004');
+Route::get('/pdf/news/annex_news_vol005.pdf')->name('annex005');
+Route::get('/pdf/news/annex_news_vol006.pdf')->name('annex006');
+Route::get('/pdf/news/annex_news_vol007.pdf')->name('annex007');
+Route::get('/pdf/news/annex_news_vol008.pdf')->name('annex008');
+Route::get('/pdf/news/annex_news_vol009.pdf')->name('annex009');
+Route::get('/pdf/news/annex_news_vol010.pdf')->name('annex010');
+Route::get('/pdf/news/annex_news_vol011.pdf')->name('annex011');
+Route::get('/videos/Nekopen/Nekopen01.mp4')->name('neko001');
+
+/*----------------------------------------------------------
+  LINEもどき
+-----------------------------------------------------------*/
+Route::get('/communication/line',           'CommunicationController@line');
+Route::post('/communication/line/post',   'CommunicationController@linePost');
+Route::get('/communication/line/get/{_target_date}',   'CommunicationController@lineGet');
+
+
+/*----------------------------------------------------------
+  PUSH通知設定
+-----------------------------------------------------------*/
+Route::get('/communication/push',           'CommunicationController@push');
+//Route::get('/communication/push/regist/{_endpoint}/{_publicKey}/{_authToken}',   'CommunicationController@pushRegist');
+Route::post('/communication/push/regist',   'CommunicationController@pushRegist');
+Route::get('/communication/push/alert/{_userid}/{_message}',   'CommunicationController@pushMessage');
+
+/*-----------------------
+  検証
+--------------------*/
+Route::get('/test/rows',           'HomeController@rows_index');
+Route::post('/test/rows_post',     'HomeController@test_rows');
+
+Route::get('/test/chart',                   'HomeController@chart_index');
+Route::get('/test/stt',                     'HomeController@speech_to_text_index');
+Route::get('/test/tweet/{tweet_id}',        'HomeController@tweet_update_test');
+Route::get('/test/cook_detail/{recipe_id}', 'Cookings\CookingHomeController@cook_detail_update_test');
+Route::get('/test/cook_edit/{recipe_id}',   'Cookings\CookingHomeController@cook_detail_edit_test');
+Route::get('/test/cook_detail',             'Cookings\CookingHomeController@cook_detail_regist_test');
+Route::post('/test/cook_update',            'Cookings\CookingHomeController@archive_edit_recipe_detail');
+Route::get('/test/line',                    'HomeController@line_test');
+
+
+Route::get('/test/game',                    'HomeController@game');
+Route::get('/test/game2',                    'HomeController@game2');
+Route::resource('/test/upload', 'FileManageController');

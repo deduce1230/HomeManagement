@@ -1,0 +1,369 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+
+//-- 一言日記用リクエスト --//
+use App\Http\Requests\Tweets\TweetRequest;
+//-- TODO用リクエスト --//
+use App\Http\Requests\Todo\TodoRequest;
+
+//-- モデル ---//
+use App\Models\Cookings\VwCookingShow;
+use App\Models\Weather\VwDailyReport;
+use App\Models\Weather\VwHourlyReport;
+use App\Models\Tweets\Tweet;
+use App\Models\Tweets\VwTweetShow;
+use App\Models\Calendar\VwCalendar;
+use App\Models\Records\VwHealth;
+
+use App\Models\Todo\VwTodoShow;
+use App\Models\Todo\TodoList;
+use App\Models\Todo\Category;
+
+//-- 記録 --//
+use App\Models\Unit;
+use App\Models\Records\DiaryRecord;
+use App\Models\Records\RecordKind;
+use App\Models\Records\RecordGroup;
+
+//-- ユーザーＩＤ取得用 ---//
+use Illuminate\Support\Facades\Auth;
+
+class DiaryRecordController extends Controller
+{
+    /**
+     * Create a new controller instance.
+     *
+     * @return void
+     */
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
+
+    /**
+     * diaryRecordChart
+     *
+     * 数値記録グラフ表示画面
+     *
+     * @return 表示画面ビュー, 表示マスタ情報
+     */
+    public function diaryRecordChart()
+    {//グラフ検証
+
+       //-- 表示項目 --
+       $groups = RecordGroup::orderBy('id', 'asc')->get();
+
+       return view('records.healths.chart',['record_kinds' => $groups, 'user_id' => Auth::id(),]);
+    }
+
+    /**
+     * diaryRecordGrid
+     *
+     * 数値記録グラフ入力画面(表示情報）
+     *
+     * @return 
+     */
+    public function diaryRecordGrid($_day_start, $_day_end)
+    {//グラフ検証
+       //$_day_start='2021/07/01';
+       //$_day_end='2021/07/31';
+
+       //-- 表示項目 --
+       //$groups = RecordGroup::orderBy('id', 'asc')->get();
+       $health = VwHealth::where('user_id' , 1)->orderBy('virtual_id', 'asc')->get();
+
+
+       // 取得値を「日付=>値」の連想配列に格納
+       $db_records=array();
+       foreach($health as $record_r){
+             $db_records[$record_r->rec_date]['Kind1'] = $record_r->Kind1;
+             $db_records[$record_r->rec_date]['Kind2'] = $record_r->Kind2;
+             $db_records[$record_r->rec_date]['Kind3'] = $record_r->Kind3;
+             $db_records[$record_r->rec_date]['Kind4'] = $record_r->Kind4;
+             $db_records[$record_r->rec_date]['Kind5'] = $record_r->Kind5;
+             $db_records[$record_r->rec_date]['Kind6'] = $record_r->Kind6;
+             $db_records[$record_r->rec_date]['Kind7'] = $record_r->Kind7;
+       }
+
+       //print($db_records['2021-08-22']['Kind1']);
+
+       // 開始～終了日を日単位で配列に格納
+       $days_records=$this->getPriaoDate($_day_start, $_day_end);
+
+       // 日単位の配列から、「日付=>値」を取り出して再配列（ない場合は「null」）
+       $rtn_records=array();
+       foreach($days_records as $days)
+       {
+           //$rtn_days['date'][]   = date('n月d日', strtotime($days));
+           $rtn_day = date('n/d', strtotime($days));
+           $rtn_records[$rtn_day]['Week']  = $this->getWeekday($days);
+           $rtn_records[$rtn_day]['Kind1'] = array_key_exists($days, $db_records) ? $db_records[$days]['Kind1'] : '';
+           $rtn_records[$rtn_day]['Kind2'] = array_key_exists($days, $db_records) ? $db_records[$days]['Kind2'] : '';
+           $rtn_records[$rtn_day]['Kind3'] = array_key_exists($days, $db_records) ? $db_records[$days]['Kind3'] : '';
+           $rtn_records[$rtn_day]['Kind4'] = array_key_exists($days, $db_records) ? $db_records[$days]['Kind4'] : '';
+           $rtn_records[$rtn_day]['Kind5'] = array_key_exists($days, $db_records) ? $db_records[$days]['Kind5'] : '';
+           $rtn_records[$rtn_day]['Kind6'] = array_key_exists($days, $db_records) ? $db_records[$days]['Kind6'] : '';
+           $rtn_records[$rtn_day]['Kind7'] = array_key_exists($days, $db_records) ? $db_records[$days]['Kind7'] : '';
+           $rtn_days[]  = $rtn_day;
+       }
+
+       //print_r($rtn_records);
+       //print($rtn_records['7/19']['Kind1']);
+
+       return view('records.healths.health-show',['healths' => $rtn_records, 'days' => $rtn_days, 'user_id' => Auth::id(),]);
+    }
+
+    /**
+    * setRecordData
+    *
+    * 日付、ユーザーIDをもとに、その日のデータを登録する。
+    *
+    * 作成日
+    *   2021/09/10
+    *
+    * @param integer $_kind_id    データ種別ID
+    * @param string  $_date       登録対象日
+    * @param float   $_value      値
+    * @param integer $_user_id    取得対象ユーザーID
+    * return 1(OK) -1(NG)
+    */
+    public function setRecordData(Request $request)
+    {
+        $_date    = $request->input('rec_date');
+        $_kind_id = $request->input('kind_id');
+        $_value   = $request->input('rec_val');
+        $_user_id = $request->input('rep_user_id');
+
+        $_target_id = $this->getRecordDataID($_date, $_kind_id, $_user_id);
+
+        if ( $_target_id > 0 )
+        {
+            $record_savedata = [
+                'id'          => $_target_id,
+                'rec_date'    => $_date,
+                'rec_kind'    => $_kind_id,
+                'rec_val'     => $_value,
+                'rep_user_id' => $_user_id,
+            ];
+
+            $record = DiaryRecord::where('id', $_target_id)->update($record_savedata);
+        }else{
+            $maxRecId = DiaryRecord::max('id');
+            $nextRecId = $maxRecId + 1;
+            $record_savedata = [
+                'id'          => $nextRecId,
+                'rec_date'    => $_date,
+                'rec_kind'    => $_kind_id,
+                'rec_val'     => $_value,
+                'rep_user_id' => $_user_id,
+            ];
+
+            $db_data = new DiaryRecord;
+            $db_data->fill($record_savedata)->save();
+        }
+
+        //return 1;
+        // HTTPステータス:200 成功
+        //return response()->json($this->deleteService>getDeleteMessage(), 
+        //    \Illuminate\Http\Response::HTTP_OK);
+        //echo "ZZZZZZZZ";
+        return 1;
+
+    }
+
+    private function getRecordDataID($_date, $_rec_kind, $_user_id)
+    {
+
+       $recordKinds = DiaryRecord::where('rec_date', $_date)->where('rec_kind', $_rec_kind)->where('rep_user_id', $_user_id)->first();
+       //$rtn_id = optional($recordKinds)->id;
+
+       if (is_object($recordKinds))
+       {
+           $rtn_id = optional($recordKinds)->id;
+
+       }else {
+           $rtn_id = 0;
+       }
+
+       //$rtn_id = 0;
+       return $rtn_id;
+
+    }
+         
+
+
+
+    /**
+    * getRecordData
+    *
+    * 記録タイプ、開始＆終了日、記録者のパラメータから
+    * 該当記録をJSON形式で返還する関数。
+    * 開始～終了は１日単位で返し、対象日に該当データがない場合は「null」とする
+    * 
+    * 作成日 
+    *   2021/08/09
+    *
+    * @param integer $_rec_kind   表示種別(record_groupsの値)
+    * @param string  $_day_start  取得開始日
+    * @param string  $_day_end    取得終了日
+    * @param integer $_user_id    取得対象ユーザーID
+    * return array   値, 日付
+    */
+    public function getRecordData($_rec_kind, $_day_start, $_day_end, $_user_id)
+    {
+       $max_kinds=7;
+       $rec_kinds=array_fill(0,$max_kinds+1,0);
+
+       $rec_color=['rgba(0,0,0,0)',
+                        'rgba(253, 134, 197, 0.7)','rgba(253, 135, 97, 0.7)','rgba(50,255,150,0.9)','rgba(150,85,155,0.9)',
+                        'rgba(255,128,0,0.9)','rgba(128,128,0,0.9)','rgba(0,0,128,0.9)'];
+       switch($_rec_kind)
+       {
+           case 1://血圧（朝、夕、上下）
+               $rec_kinds[1]=1; 
+               $rec_kinds[2]=1; 
+               $rec_kinds[3]=1; 
+               $rec_kinds[4]=1; 
+               break;
+           case 2://体重・腹囲
+               $rec_kinds[5]=1;
+               $rec_kinds[7]=1;
+               break;
+           case 3://歩数
+               $rec_kinds[6]=1;
+       }
+
+       $recordKinds = RecordKind::orderBy('rec_kind', 'asc')->get();
+       forEach($recordKinds as $recordKind){
+           $recordName[$recordKind->rec_kind]= $recordKind->kind_name;
+       }
+
+       $rtn_datasets=array();
+       $rtn_data=array();
+       for($i = 1; $i <= $max_kinds; $i++) {
+           if ($rec_kinds[$i]>0) {
+               // Where条件作成
+               $condition_where  = ['rec_kind' => $i, 'rep_user_id' => $_user_id];
+               $condition_where2 = [ ['rec_date','>=',date("Y-m-d", strtotime($_day_start))],
+                                     ['rec_date','<=',date("Y-m-d", strtotime($_day_end))] ];
+               // DiaryRecordモデルから取得
+               $records = DiaryRecord::where($condition_where)->where($condition_where2)->get();
+
+               // 取得値を「日付=>値」の連想配列に格納
+               $db_records=array();
+               foreach($records as $record_r){
+                   $db_records[$record_r->rec_date] = $record_r->rec_val;
+               }
+
+               // 開始～終了日を日単位で配列に格納
+               $days_records=$this->getPriaoDate($_day_start, $_day_end);
+
+               // 日単位の配列から、「日付=>値」を取り出して再配列（ない場合は「null」）
+               $rtn_records=array();
+               foreach($days_records as $days)
+               {
+                   $rtn_records['date'][]   = date('n月d日', strtotime($days));
+                   $rtn_records['values'][] = array_key_exists($days, $db_records) ? $db_records[$days] : 'null';
+               }
+
+               // データ作成
+               $rtn_datasets['label']= $recordName[$i];
+               
+               $rtn_datasets['type']= 'line';
+               $rtn_datasets['data']= $rtn_records['values'];
+               //$rtn_datasets['backgroundColor']='rgba(0, 134, 197, 0.7)';
+               //$rtn_datasets['borderColor']='rgba(0, 134, 197, 1)';
+               $rtn_datasets['backgroundColor']=$rec_color[$i];
+               $rtn_datasets['borderColor']=$rec_color[$i];
+               $rtn_datasets['borderWidth']=1;
+               $rtn_datasets['spanGaps']=true;
+
+               $rtn_data['datasets'][] = $rtn_datasets;
+           }
+       }
+
+       //$rtn_data['datasets'][] = $rtn_datasets;
+       $rtn_data['labels']   = $rtn_records['date'];
+
+       $rtn_legend=array();
+       $rtn_legend['display']= false;
+
+       $rtn_options=array();
+       $rtn_options['legend']=$rtn_legend;
+
+       $rtn_config=array();
+       $rtn_config['data']    = $rtn_data;
+       $rtn_config['options'] = $rtn_options;
+
+//print_r( $rtn_config);
+
+
+       $rtn_datasets=array();
+       $rtn_datasets['type']= 'line';
+       //$rtn_datasets['data']= $rtn_records['values'];
+       $rtn_datasets['data']= array(60,63,85,67,79);
+       $rtn_datasets['backgroundColor']='rgb(0, 134, 197, 0.7)';
+       $rtn_datasets['borderColor']='rgba(0, 134, 197, 1)';
+       $rtn_datasets['borderWidth']=1;
+       $rtn_datasets['spanGaps']=true;
+
+       $rtn_data=array();
+       $rtn_data['datasets'][0] = $rtn_datasets;
+       //$rtn_data['labels']   = $rtn_records['date'];
+       $rtn_data['labels']   = array(1,2,3,4,5);
+
+       $rtn_legend=array();
+       $rtn_legend['display']= false;
+
+       $rtn_options=array();
+       $rtn_options['legend']=$rtn_legend;
+
+       $rtn_config2=array();
+       $rtn_config2['data']    = $rtn_data;
+       $rtn_config2['options'] = $rtn_options;
+
+
+       //return [$rtn_config, $rtn_config2];
+       return [$rtn_config];
+    }
+
+    /**
+    * getPriaoDate
+    *
+    * 指定期間の日付を配列で返す
+    *
+    * @paran string  $_day_start  開始日 
+    * @paran string  $_day_start  終了日
+    * return array                日単位の連続した配列
+    */
+    private function getPriaoDate($_day_start, $_day_end )
+    {
+        $start = $_day_start;
+        $end = $_day_end;
+        $diff = (strtotime($end) - strtotime($start)) / ( 60 * 60 * 24);
+        $period = array();
+        for($i = 0; $i <= $diff; $i++) {
+           $period[] = date('Y-m-d', strtotime($start . '+' . $i . 'days'));
+        }
+        return $period;
+     }
+
+    /**
+    * getWeekday
+    *
+    * 指定日付の曜日を返す
+    *
+    * @paran string  $_date  対象日 
+    * return                 曜日（漢字）
+    */
+     private function getWeekday($_date)
+     {
+         $week = array( "日", "月", "火", "水", "木", "金", "土" );
+
+         return $week[date("w", strtotime($_date))];
+     }
+
+}

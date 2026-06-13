@@ -1,0 +1,35 @@
+@extends('layouts.common')
+ 
+@section('title', 'HomeManagement Web')
+@section('keywords', 'naoshi,yuko')
+@section('description', '山下家の情報一括管理')
+@include('section.head')
+@include('section.header')
+ 
+@section('content')
+<div class="container">
+<h1> 料理分析 </h1>
+       <div class="content">
+           <canvas id="allChart"></canvas>
+       </div>
+
+
+       <script src="{{ mix('js/show_chart.js') }}"></script>
+       <!-- piechart-outlabelsプラグインを呼び出す -->
+       <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-piechart-outlabels"></script>
+
+       <script>
+           id = 'allChart';
+           labels = @json($keys);
+           data = @json($counts);
+           backgroundColor = @json($bg_colors);
+           borderColor = @json($bd_colors);
+           make_chart(id,labels,data,backgroundColor,borderColor);
+       </script>
+
+</div>
+
+@endsection
+ 
+@include('section.footer')
+

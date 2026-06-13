@@ -1,0 +1,55 @@
+<?php
+
+/*
+|--------------------------------------------------------------------------
+| Web Routes
+|--------------------------------------------------------------------------
+|
+| Here is where you can register web routes for your application. These
+| routes are loaded by the RouteServiceProvider within a group which
+| contains the "web" middleware group. Now create something great!
+|
+*/
+
+/*
+Route::get('/', function () {
+    return view('home');
+});
+*/
+Route::get('/', 'HomeController@index')->name('home');
+
+/*
+|--------------------------------------------------------------------------
+| ログイン処理
+|--------------------------------------------------------------------------
+ */
+Auth::routes();
+
+/*
+|--------------------------------------------------------------------------
+| ホーム画面
+|--------------------------------------------------------------------------
+ */
+Route::get('/home', 'HomeController@index')->name('home');
+
+/*
+|--------------------------------------------------------------------------
+| 献立くん
+|--------------------------------------------------------------------------
+ */
+Route::get('/cooking_index', 'HomeController@cooking_index');
+Route::get('/cooking/setting', 'HomeController@cooking_setting');
+Route::get('/cooking/setting/table', 'HomeController@cooking_setting_table');
+Route::resource('/cooking/setting/table/food_type', 'Cookings\FoodTypeController', ['only' => ['index', 'show', 'create', 'store','edit', 'update', 'destroy']]);
+Route::resource('/cooking/setting/table/food_info', 'Cookings\FoodInfoController', ['only' => ['index', 'show', 'create', 'store','edit', 'update', 'destroy']]);
+Route::resource('/cooking/setting/table/record', 'Cookings\RecordController', ['only' => ['index', 'show', 'create', 'store','edit', 'update', 'destroy']]);
+Route::resource('/cooking/setting/table/meal_type', 'Cookings\MealTypeController', ['only' => ['index', 'show', 'create', 'store','edit', 'update', 'destroy']]);
+Route::resource('/cooking/setting/table/meal_kind', 'Cookings\MealKindController', ['only' => ['index', 'show', 'create', 'store','edit', 'update', 'destroy']]);
+Route::resource('/cooking/setting/table/cooking_recipe', 'Cookings\CookingRecipeController', ['only' => ['index', 'show', 'create', 'store','edit', 'update', 'destroy']]);
+Route::resource('/cooking/setting/table/cooking', 'Cookings\CookingController', ['only' => ['index', 'show', 'create', 'store','edit', 'update', 'destroy']]);
+Route::resource('/cooking/setting/table/meal_category', 'Cookings\MealCategoryController', ['only' => ['index', 'show', 'create', 'store','edit', 'update', 'destroy']]);
+Route::resource('/cooking/setting/table/food_list', 'Cookings\FoodListController', ['only' => ['index', 'show', 'create', 'store','edit', 'update', 'destroy']]);
+Route::resource('/cooking/setting/table/dish_name', 'Cookings\DishNameController', ['only' => ['index', 'show', 'create', 'store','edit', 'update', 'destroy']]);
+Route::resource('/cooking/setting/table/cat_relation', 'Cookings\CatRelationController', ['only' => ['index', 'show', 'create', 'store','edit', 'update', 'destroy']]);
+
+Route::get('/cooking/record', 'HomeController@cooking_record');

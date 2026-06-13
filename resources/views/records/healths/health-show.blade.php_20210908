@@ -1,0 +1,74 @@
+@extends('layouts.common')
+
+@section('title', 'HomeManagement Web')
+@section('keywords', 'naoshi,yuko')
+@section('description', '山下家の情報一括管理')
+@section('pageCss')
+  <link href="/css/lightbox/photos-style.css" rel="stylesheet" type="text/css">
+  <link rel="stylesheet" href="/css/lightbox/lightbox.css">
+  <script src="/js/lightbox/lightbox-plus-jquery.min.js"></script>
+@endsection
+@include('section.head')
+
+@include('section.header')
+
+@section('content')
+<h5><a href='javascript:history.back()'>献立くん 食事記録</a></h5>
+<!--
+<div class="container row justify-content-start">
+-->
+    @if (session('poststatus'))
+        <div class="alert alert-success mt-4 mb-4">
+            {{ session('poststatus') }}
+        </div>
+    @endif
+
+<table class="border-table">
+    <tbody>
+        <tr class="">
+            <th class="font-white bold center v-middle w5per">順位</th>
+            <th class="font-white bold center v-middle w20per">特徴</th>
+            <th class="font-white bold center v-middle w30per">メイン勇者<br>サブ勇者</th>
+            <th class="font-white bold center v-middle">コメント</th>
+        </tr>
+  
+        <tr class="">
+            <td rowspan="2" class="center v-middle">1</td>
+            <td rowspan="2" class="center v-middle"><div class="" contenteditable="true">最高に可愛い</div></td>
+            <td><div class="" contenteditable="true">冬服ぐんちゃん（青）</div></td>
+            <td rowspan="2" class="v-middle"><div class="" contenteditable="true">高嶋さんが6段で自然回復ついてて近接範囲で前線においといてドロップ回復アイテム回収できるし、ぐんちゃんの必殺技で他の子回復させられるのが楽しい</div></td>
+        </tr>
+        <tr class="bg-dark2">
+            <td><div class="sqlp-page-url" contenteditable="true">勇者高嶋（黄）</div></td>
+        </tr>
+          
+  
+        <tr class="">
+            <td rowspan="2" class="center v-middle">2</td>
+            <td rowspan="2" class="center v-middle"><div class="" contenteditable="true">フレンドでよく使う</div></td>
+            <td><div class="" contenteditable="true">勇者杏（黄色）</div></td>
+            <td rowspan="2" class="v-middle"><div class="" contenteditable="true">
+            勝手にワザリング・ハイツ先輩って呼んでる(名称に特に意味はない)。遠射遠射で使いやすいし全体攻撃だし全体攻撃だし全体攻撃だしたまっち先輩体力高いしという感じ、メインたまっち先輩のこともある、ワザリング・ハイツ使わなければ攻撃ペースアップのおかげで唯置いておくだけでも強い
+            </div></td>
+        </tr>
+        <tr class="">
+            <td><div class="sqlp-page-url" contenteditable="true">キャンプたまっち先輩（緑）</div></td>
+        </tr>
+          
+        <tr class="">
+            <td rowspan="2" class="center v-middle">3</td>
+            <td rowspan="2" class="center v-middle"><div class="" contenteditable="true">どうしようもないときに使う</div></td>
+            <td><div class="" contenteditable="true">艶麗東郷さん（紫）</div></td>
+            <td rowspan="2" class="v-middle"><div class="" contenteditable="true">体力に難があるけどやっぱり全体攻撃は強い、あんたまとセットで後衛に置くとクリアリミットが妙に短いステージもなんとかクリアできる…、結束なら攻撃ペースアップついてくるし、フレンドやサブを勇者若葉ちゃん(青)にして必殺技ゲージためることもある</div></td>
+        </tr>
+        <tr class="">
+            <td><div class="sqlp-page-url" contenteditable="true">結束わっしー（青）</div></td>
+        </tr>
+          
+         
+    </tbody>
+</table>
+
+@endsection
+
+@include('section.footer')

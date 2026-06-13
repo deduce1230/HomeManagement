@@ -1,0 +1,108 @@
+@extends('layouts.common')
+
+@section('title', 'HomeManagement Web')
+@section('keywords', 'naoshi,yuko')
+@section('description', '山下家の情報一括管理')
+@include('section.head')
+<link href="/css/hm_style_camera.css" rel="stylesheet">
+<script type="text/javascript" src="/js/hm_rec_script.js"></script>
+@include('section.header')
+
+@section('content')
+<div class="container">
+    <h5> <a href='javascript:history.back();'>一言日記 編集画面</a></h5>
+    @if (session('poststatus'))
+        <div class="alert alert-success mt-4 mb-4">
+            {{ session('poststatus') }}
+        </div>
+    @endif
+
+    <form class="meal-input-form" method="post" action="/hm_twitter/tweet_upload" autocomplete="off" name="tweetform">
+      @csrf
+      <h6>日付</h6>
+      <div class="item">
+        <input type="date" id="tweet_date" name="tweet_date" value='{{ date('Y-m-d') }}'>
+      </div>
+
+      <p>
+      <h6>内容</h6>
+      <table style="border:none;">
+          <tr><td style="border:none;">
+              <div class="inputWithIcon">
+                  <input type="text"  id="tweet" 
+                         name="tweet" 
+                         class="form-control {{ $errors->has('tweet') ? 'is-invalid' : '' }} btn-input"
+                         placeholder="つぶやいてください">
+
+                  <i class="fab fa-twitter fa-lg fa-fw" aria-hidden="true"></i>
+                       @if ($errors->has('tweet'))
+                           <div class="invalid-feedback">
+                                {{ $errors->first('tweet') }}
+                           </div>
+                       @endif
+
+              </div>
+          </td><td width=20px style="border:none;">
+              <a href="#" class="btn-real btn-real2" onclick="recording('tweet','micicon');">
+                  <i id="micicon" class="fas fa-microphone"></i>
+              </a>
+          </td></tr>
+
+      </table>
+
+      <div class="inputWithIcon">
+          <input type="text"  id="ref_url" 
+                 name="ref_url" 
+                 class="form-control {{ $errors->has('ref_url') ? 'is-invalid' : '' }}"
+                 placeholder="参照URL">
+          <i class="fas fa-globe fa-lg fa-fw" aria-hidden="true"></i>
+               @if ($errors->has('ref_url'))
+                   <div class="invalid-feedback">
+                        {{ $errors->first('ref_url') }}
+                   </div>
+               @endif
+      </div>
+
+      <h6>画像アップロード</h6>
+      <div style="display: flex;">
+          <!-- カメラボタン -->
+          <label class="btn-real btn-real3" style="margin-left:10px; margin-bottom:10px" id="camera_btn">
+             <i class="fas fa-camera fa-lg"></i>
+          </label>
+
+          <!-- ファイル選択 -->
+          <label for="file_photo" class="btn-real btn-real3" style="margin-left:10px" id="file-input">
+             <i class="fas fa-file-image fa-lg"></i>
+             <input type="file" id="file_photo" style="display:none;">
+          </label>
+
+          <!-- ファイルドラッグ＆ドロップ -->
+          <div id="drop-zone" style="color:gray; float:right; border: 1px dashed; 
+                                     border-radius:10px; padding: 8px; width:190px; height:40px; margin-left:10px;">
+              ここにドラッグ＆ドロップ
+          </div>
+      </div>
+
+
+      <!-- カメラ映像が描画されます。 -->
+      <video id="myVideo" style="background-color: #000; width:100%;height:100%; display:none;" autoplay></video>
+      <canvas id="canvas" style="border:0px solid;width:100%;height:100%; display:none;"></canvas>
+      <canvas id="canvas_show" style="border:0px solid;width:300px;height:300px; display:none;"></canvas>
+       <input type="hidden" name="imagedata" id="imagedata" value="">
+
+      <div class="py-3">
+          <a class="btn btn-secondary" href="javascript:history.back()">
+                戻る
+          </a>
+         <button id="submit_btn" class="btn btn-primary">
+               登録
+         </button>
+      </div>
+    </form>
+
+</div>
+
+<script type="text/javascript" src="/js/hm_camera_script.js"></script>
+@endsection
+@include('section.footer')
+

@@ -1,0 +1,81 @@
+@extends('layouts.common')
+
+@section('title', 'HomeManagement Web')
+@section('keywords', 'naoshi,yuko')
+@section('description', '山下家の情報一括管理')
+@include('section.head')
+
+@include('section.header')
+
+
+@section('content')
+<div class="table-responsive">
+    <h5> <a href='/cooking/setting/table'>マスタ管理　食材情報マスタテーブル</a></h5>
+    <div class="mt-4 mb-4">
+        <a href="/cooking/setting/table/food_info/create" class="btn btn-primary">
+            食材の新規登録
+        </a>
+    </div>
+    @if (session('poststatus'))
+        <div class="alert alert-success mt-4 mb-4">
+            {{ session('poststatus') }}
+        </div>
+    @endif
+    <table class="table table-hover hm-table01">
+        <thead>
+        <tr>
+<!--
+            <th>食材ID</th>
+-->
+            <th>食材名</th>
+            <th>食品群</th>
+            <th>分類名</th>
+            <th>旬開始</th>
+            <th>旬終了</th>
+<!--
+            <th class="onlypc">更新日時</th>
+-->
+            <th>処理</th>
+        </tr>
+        </thead>
+        <tbody id="tbl">
+        @foreach ($food_infos as $food_info)
+            <form method="post" action="/cooking/setting/table/food_info/{{$food_info->food_id}}">
+            @csrf
+            @method('DELETE')
+            <tr>
+<!--
+                <td>{{ $food_info->food_id }}</td>
+-->
+                <td>{{ $food_info->food_nm }}</td>
+                <td>{{ $food_info->group_num }}</td>
+                <td>{{ $food_info->group_subname }}</td>
+                <td>{{ $food_info->season_s }}</td>
+                <td>{{ $food_info->season_e }}</td>
+<!--
+                <td class="onlypc">{{ $food_info->updated_at->format('Y.m.d') }}</td>
+-->
+                <td class="text-nowrap">
+                    <a href="/cooking/setting/table/food_info/{{$food_info->food_id}}/edit" class="btn btn-success btn-sm">編集</a>
+<!--
+                    <button type="submit" class="btn btn-danger btn-sm">
+                       削除
+                    </button>
+-->
+                    <a href="/cooking/edit_foodnut/{{$food_info->food_id}}" class="btn btn-success btn-sm">栄養素登録</a>
+
+                </td>
+            </tr>
+            </form>
+        @endforeach
+        </tbody>
+    </table>
+
+<div class="d-flex justify-content-center mb-5">
+    {{ $food_infos->links() }}
+</div>
+</div>
+@endsection
+
+@include('section.footer')
+

@@ -1,0 +1,101 @@
+@extends('layouts.common')
+ 
+@section('title', 'HomeManagement Web')
+@section('keywords', 'naoshi,yuko')
+@section('description', '山下家の情報一括管理')
+@include('section.head')
+ 
+@include('section.header')
+ 
+@section('content')
+<div class="container">
+
+  <script src="{{ mix('js/show_chart.js') }}"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.2/Chart.bundle.min.js"></script>
+
+  <h1>直近天気予報({{ $weather_info['from'] }}～{{ $weather_info['to'] }})</h1>
+
+  <script>
+  var ctx = document.getElementById("myLineChart").getContext("2d");
+  var wea_temperature = <?php echo json_encode($weather['temperature'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
+  var wea_humidity    = <?php echo json_encode($weather['humidity'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
+  var wea_hour        = <?php echo json_encode($weather['hour'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
+  </script>
+
+  <div class="container" style="width:100%">
+      <canvas id="canvas"></canvas>
+  </div>
+
+  <script>
+  window.onload = function() {
+      ctx = document.getElementById("canvas").getContext("2d");
+      window.myBar = new Chart(ctx, {
+          type: 'bar', // ここは bar にする必要があります
+          data: barChartData,
+          options: complexChartOption
+      });
+  };
+  </script>
+
+
+<script>
+var barChartData = {
+    labels: wea_hour,
+    datasets: [
+    {
+        type: 'line',
+        label: 'sample-line',
+        data: wea_temperature,
+        borderColor : "rgba(254,97,132,0.8)",
+        backgroundColor : "rgba(254,97,132,0.5)",
+        yAxisID: "y-axis-1",
+    },
+    {
+        type: 'bar',
+        label: 'sample-bar',
+        data: wea_humidity,
+        borderColor : "rgba(54,164,235,0.8)",
+        backgroundColor : "rgba(54,164,235,0.5)",
+        yAxisID: "y-axis-2",
+    },
+    ],
+};
+</script>
+
+<script>
+var complexChartOption = {
+    responsive: true,
+    scales: {
+        yAxes: [{
+            id: "y-axis-1",   // Y軸のID
+            type: "linear",   // linear固定 
+            position: "left", // どちら側に表示される軸か？
+            ticks: {          // スケール
+                max: 100,
+                min: 0,
+                stepSize: 10
+            }
+        }, {
+            id: "y-axis-2",
+            type: "linear", 
+            position: "right",
+            ticks: {
+                max: 40,
+                min: 0,
+                stepSize: 5
+            }
+        }],
+    }
+
+};
+</script>
+
+
+
+
+</div>
+
+@endsection
+ 
+@include('section.footer')
+

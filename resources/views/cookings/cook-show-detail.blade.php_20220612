@@ -1,0 +1,90 @@
+@extends('layouts.common')
+
+@section('title', 'HomeManagement Web')
+@section('keywords', 'naoshi,yuko')
+@section('description', '山下家の情報一括管理')
+@section('pageCss')
+  <link href="/css/lightbox/photos-style.css" rel="stylesheet" type="text/css">
+  <link rel="stylesheet" href="/css/lightbox/lightbox.css">
+  <script src="/js/lightbox/lightbox-plus-jquery.min.js"></script>
+@endsection
+@include('section.head')
+
+@include('section.header')
+
+@section('content')
+<h5><a href='javascript:history.back();'>献立くん レシピ詳細</a></h5>
+<!--
+<div class="container row justify-content-start">
+-->
+    @if (session('poststatus'))
+        <div class="alert alert-success mt-4 mb-4">
+            {{ session('poststatus') }}
+        </div>
+    @endif
+    <table class="table table-hover hm-table01 hm-table02">
+        <thead>
+        <tr>
+            <th colspan=2>{{$cooking_info[0]->recipe_nm}}</th>
+        </tr>
+        </thead>
+        <tbody id="tbl">
+            <tr>
+                <td class="td-center" colspan=2>
+                    <?php 
+                       if (count($cooking_info) > 0)
+                          $img = "/photos/recipes/".$cooking_info[0]->recipe_id.".jpg";
+                          if (!file_exists("/opt/home-management/www/public".$img)) {
+                               $img = "/photos/recipes/0.jpg";
+                          }
+                    ?>
+                    <img src='{{$img}}'>
+                </td>
+            </tr>
+        </tbody>
+        <thead>
+        <tr>
+            <th>材料名</th>
+            @if (count($cooking_show_details) > 0)
+            <th>分量　{{$cooking_show_details[0]->for_num}}</th>
+            @else
+            <th>分量　</th>
+            @endif
+        </tr>
+        </thead>
+        <tbody id="tbl">
+        @foreach ($cooking_show_details as $cooking_show_detail)
+            <tr>
+                <td class="td-center" >
+                    {{  $cooking_show_detail->ingredients }}
+                </td>
+                <td class="td-center" >
+                    {{  $cooking_show_detail->amount }}
+                </td>
+            </tr>
+        @endforeach
+        @if (isset($cooking_info[0]->memo))
+            <tr>
+            <th colspan=2>メ　モ</th>
+            </tr>
+            <tr>
+            <td colspan=2 class="td-left">
+                {{ $cooking_info[0]->memo }}
+            </td>
+            </tr>
+        @endif
+
+    <tr><td class="td-center td-no-border" style="border: 0px none;"colspan=2>
+         <a class="btn btn-success" href="/cooking/edit_detail/{{ $cooking_info[0]->recipe_id }}">
+              　編　　集　 
+         </a>
+    </td></tr>
+        </tbody>
+    </table>
+
+<!--
+</div>
+-->
+@endsection
+
+@include('section.footer')

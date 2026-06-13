@@ -1,0 +1,72 @@
+@extends('layouts.common')
+
+@section('title', 'HomeManagement Web')
+@section('keywords', 'naoshi,yuko')
+@section('description', '山下家の情報一括管理')
+@section('pageCss')
+  <link href="/css/lightbox/photos-style.css" rel="stylesheet" type="text/css">
+  <link rel="stylesheet" href="/css/lightbox/lightbox.css">
+  <script src="/js/lightbox/lightbox-plus-jquery.min.js"></script>
+  <link rel="stylesheet" href="/css/hm_radio.css">
+@endsection
+@include('section.head')
+
+@include('section.header')
+
+@section('content')
+<h5><a href='javascript:history.back()'>TO-DO リスト</a></h5>
+<!--
+<div class="container row justify-content-start">
+-->
+    @if (session('poststatus'))
+        <div class="alert alert-success mt-4 mb-4">
+            {{ session('poststatus') }}
+        </div>
+    @endif
+    <table class="table table-hover hm-table01">
+        <thead>
+        <tr>
+            <th colspan=2>リスト</th>
+        </tr>
+        </thead>
+        <tbody id="tbl">
+        @foreach ($todo_shows as $todo_show)
+            <tr>
+                <td class="td-no-right" rowspan = 1 style='width:65%'>
+                    <div class="hm-div">
+                        <div class="setLeft">
+                            <label class="check_btn">
+                                <input type="checkbox" name='todos'>
+                                    <i class="fa fa-square-o fa-2x"></i>
+                                    <i class="fa fa-check-square-o fa-2x"></i>
+                                    <span> {{ $todo_show->mission }} </span>
+                            </label>
+                        </div>
+                    </div>
+                </td>
+                <td class="td-no-left" rowspan = 1>
+                    <div class="hm-div">
+                        <div class="setLeft">
+                             2021/07/30
+                        </div>
+                        <div class="setRight">
+                            <a href="/cooking/search_menu" class="btn-real">
+                                <i class="fas fa-trash"></i>
+                            </a>
+                        </div>
+                    </div>
+                </td>
+            </tr>
+        @endforeach
+        </tbody>
+    </table>
+
+<div class="d-flex justify-content-center mb-5">
+    {{ $todo_shows->links() }}
+</div>
+<!--
+</div>
+-->
+@endsection
+
+@include('section.footer')

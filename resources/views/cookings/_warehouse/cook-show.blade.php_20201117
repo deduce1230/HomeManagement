@@ -1,0 +1,37 @@
+@extends('layouts.common')
+
+@section('title', 'HomeManagement Web')
+@section('keywords', 'naoshi,yuko')
+@section('description', '山下家の情報一括管理')
+@include('section.head')
+
+@include('section.header')
+
+@section('content')
+<h5><a href='/'>献立くん 食事記録</a></h5>
+<div class="container">
+    <table class="table table-hover">
+        <thead>
+        <tr>
+            <th>食事ID</th>
+            <th>食事名</th>
+        </tr>
+        </thead>
+        <tbody id="tbl">
+        @foreach ($cooking_shows as $cookign_show)
+            <tr>
+                <td>{{ $cookign_show->meal_date }}</td>
+                <td>{{ $cookign_show->recipe_nm }}</td>
+            </tr>
+            </form>
+        @endforeach
+        </tbody>
+    </table>
+
+<div class="d-flex justify-content-center mb-5">
+    {{ $cooking_shows->links() }}
+</div>
+</div>
+@endsection
+
+@include('section.footer')

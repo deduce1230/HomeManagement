@@ -1,0 +1,57 @@
+@extends('layouts.common')
+
+@section('title', 'HomeManagement Web')
+@section('keywords', 'naoshi,yuko')
+@section('description', '山下家の情報一括管理')
+@include('section.head')
+
+@include('section.header')
+
+@section('content')
+<h5><a href='javascript:history.back();'>検索結果</a></h5>
+<h6>検索ワード：{{$searched_word}}</h6>
+<div class="container">
+    <div class="row justify-content-center">
+            @foreach ($search_result as $row_record)
+            <?php $img = "/photos/recipes/".$row_record->recipe_id.".jpg"; 
+                  if (!file_exists("/opt/home-management/www/public".$img)) {
+                       $img = "/photos/recipes/0.jpg";
+                  }
+            ?>
+
+                <div class="panel-menu">
+                    <div class="panel-menu_item  panel-menu_item-view">
+                          @if (strlen($row_record->last_date) > 0)
+<!--
+                          <strong><font color="darkslategray">{{$row_record->last_date}}</font></strong>
+-->
+                          <a href="/cooking/search_calendar/{{$row_record->last_date}}/{{$row_record->last_date}}">
+                              <strong><font color="darkslategray">{{$row_record->last_date}}</font></strong>
+                          </a>
+                          @else
+                          ----/--/--
+                          @endif
+                          <a href="/cooking/record/rec_meal/{{$row_record->recipe_id}}">
+                                <div class="panel-menu_item_img_food"><img src={{$img}}></div>
+                          </a>
+                          <div class="caption">
+                              <a href="/cooking/show_detail/{{$row_record->recipe_id}}" class="btn-real">
+                                  <i class="fas fa-info"></i>
+                              </a>
+                              <a href="/cooking/record/rec_meal/{{$row_record->recipe_id}}" class="btn-real">
+                                  <i class="fas fa-utensils"></i>
+                              </a>
+                              <a href="{{$row_record->ref_url}}" class="btn-real">
+                                  <i class="fas fa-globe"></i>
+                              </a>
+                          </div>
+                          <p> {{$row_record->recipe_nm}} </p>
+                    </div>
+                </div>
+            @endforeach
+    </div>
+
+</div>
+@endsection
+
+@include('section.footer')

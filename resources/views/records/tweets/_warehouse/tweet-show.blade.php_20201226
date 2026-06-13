@@ -1,0 +1,81 @@
+@extends('layouts.common')
+
+@section('title', 'HomeManagement Web')
+@section('keywords', 'naoshi,yuko')
+@section('description', '山下家の情報一括管理')
+@section('pageCss')
+  <link href="/css/lightbox/photos-style.css" rel="stylesheet" type="text/css">
+  <link rel="stylesheet" href="/css/lightbox/lightbox.css">
+  <script src="/js/lightbox/lightbox-plus-jquery.min.js"></script>
+@endsection
+@include('section.head')
+
+@include('section.header')
+
+@section('content')
+<h5><a href='javascript:history.back()'>献立くん 食事記録</a></h5>
+<!--
+<div class="container row justify-content-start">
+-->
+    @if (session('poststatus'))
+        <div class="alert alert-success mt-4 mb-4">
+            {{ session('poststatus') }}
+        </div>
+    @endif
+    <table class="table table-hover hm-table01">
+        <thead>
+        <tr>
+            <th colspan=1>日付</th>
+            <th colspan=3>一言</th>
+        </tr>
+        </thead>
+        <tbody id="tbl">
+        <?php $row_cnt =0; ?>
+        @foreach ($diary_shows as $diary_show)
+            <tr>
+                <?php $row_cnt ++; ?>
+                @if ($diary_show->tweet_date_order === $diary_show->tweet_date_count || $row_cnt % 10 === 1)
+                <td class="td-center" rowspan = {{ $diary_show->tweet_date_order }}>
+                    {{ date('m/d',strtotime($diary_show->tweet_date)) }} ({{ $diary_show->weekday }})
+                </td>
+                @endif
+                <td class="td-center td-no-rightleft">
+                    @if (file_exists('/opt/home-management/www/public/photos/diary/diary'.$diary_show->rec_id.'.jpg')) 
+                      <a href="{{ htmlspecialchars('/photos/diary/diary'.$diary_show->rec_id.'.jpg') }}" data-lightbox="pics" class="btn-real">
+                    @else
+                      <a href="#" class="btn-not-real">
+                    @endif
+                        <i class="fas fa-tv"></i>
+                    </a>
+                </td>
+                <td class="td-no-rightleft">
+                   @if ($diary_show->ref_url != "#")
+                    <a href='{{ $diary_show->ref_url }}' target='blank'>
+                   @endif
+                        {{ $diary_show->tweet }}
+                   @if ($diary_show->ref_url != "#")
+                    </a>
+                   @endif
+                </td>
+                <td class="td-center td-no-left">
+<!--
+                    <a href="/diary/record/rec_edit/{{$diary_show->rec_id}}/{{$diary_show->recipe_id}}" class="btn-real">
+-->
+                    <a href="#" class="btn-real">
+                        <i class="fas fa-edit"></i>
+                    </a>
+                </id>
+            </tr>
+        @endforeach
+        </tbody>
+    </table>
+
+<div class="d-flex justify-content-center mb-5">
+    {{ $diary_shows->links() }}
+</div>
+<!--
+</div>
+-->
+@endsection
+
+@include('section.footer')

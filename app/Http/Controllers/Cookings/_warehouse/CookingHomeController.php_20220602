@@ -1,0 +1,688 @@
+<?php
+
+namespace App\Http\Controllers\Cookings;
+
+use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+//-- Concat使用のため
+use Illuminate\Support\Facades\DB;
+
+use App\Http\Requests\Cookings\VwSearchResult01_Request;
+use App\Http\Requests\Cookings\CookingRequest;
+use App\Http\Requests\Cookings\SearchRequest;
+
+//-- メニュー提案用
+use App\Models\Cookings\TypeMaster;
+
+use App\Models\Cookings\VwMealKindDay;
+use App\Models\Cookings\VwSearchResult;
+use App\Models\Cookings\VwCookingShow;
+use App\Models\Cookings\MealType;
+use App\Models\Cookings\MealKind;
+use App\Models\Cookings\Record;
+use App\Models\Cookings\Cooking;
+use App\Models\Cookings\CookingRecipe;
+use App\Models\Cookings\FoodList;
+//-- 類似検索用 --
+use App\Models\Cookings\WkSimilarMenu;
+use App\Models\Cookings\VwSimilarShow;
+//-- ユーザーＩＤ取得用 ---//
+use Illuminate\Support\Facades\Auth;
+
+class CookingHomeController extends Controller
+{
+    public function cooking_index()
+    {
+        return view('cookings.cook-home');
+    }
+    public function cooking_setting()
+    {
+        return view('cookings.settings.setting-home');
+    }
+    public function cooking_setting_table()
+    {
+        return view('cookings.settings.tables.table-home');
+    }
+    public function cooking_record()
+    {
+        return view('cookings.records.record-home');
+    }
+    public function cooking_search()
+    {
+        return view('cookings.search.search-home');
+    }
+    public function cooking_search_menu()
+    {//-- 過去メニュー検索画面
+        $food_list = FoodList::orderBy('list_id', 'asc')->get();
+        $meal_type = MealType::orderBy('meal_id', 'asc')->get();
+        return view('cookings.search.search-menu', ['meal_type' => $meal_type, 'food_list' => $food_list]);
+    }
+    public function cook_similar_search()
+    {//-- 類似メニュー検索画面
+        $food_list = FoodList::orderBy('list_id', 'asc')->get();
+        $meal_type = MealType::orderBy('meal_id', 'asc')->get();
+        return view('cookings.search.search-menu-similar', ['meal_type' => $meal_type, 'food_list' => $food_list]);
+    }
+
+    public function cooking_search_menu_days()
+    {//-- 過去メニュー検索画面(日付から検索)
+        $food_list = FoodList::orderBy('list_id', 'asc')->get();
+        $meal_type = MealType::orderBy('meal_id', 'asc')->get();
+        return view('cookings.search.search-menu-days', ['meal_type' => $meal_type, 'food_list' => $food_list]);
+    }
+    //public function cooking_search_exec(Request $request)
+    public function cooking_search_exec(SearchRequest $request)
+    {//-- 検索処理＆結果表示
+        //$food_list     = FoodList::orderBy('list_id', 'asc')->get();
+        //$meal_type = MealType::orderBy('meal_id', 'asc')->get();
+
+        $str_kana_word = mb_convert_kana($request->search_word, "KVC");
+
+        $str_words = $this->extractKeywords($str_kana_word,5);
+
+        $query = VwSearchResult::query();
+
+        if ($request->search_type == 0){
+        //-- 材料からの検索 --
+            foreach ($str_words as $search_word){
+                //$query->where('ingredients', 'like', "%$search_word%")->orwhere('recipe_nm_kana', 'like', "%$search_word%");
+                $query->where(DB::raw('concat(ingredients,recipe_nm_kana)'), 'like', "%$search_word%");
+            }
+            $searchword = $request->search_word;
+        }else if ($request->search_type == 1){
+        //-- 材料からの検索 --
+            foreach ($str_words as $search_word){
+                $query->where('ingredients', 'like', "%$search_word%");
+            }
+            $searchword = $request->search_word;
+        }else if ($request->search_type == 2){
+        //-- 料理名からの検索 --
+            foreach ($str_words as $search_word){
+                $query->where('recipe_nm_kana', 'like', "%$search_word%");
+            }
+            $searchword = $request->search_word;
+        }else if ($request->search_type == 3){
+        //-- 鶏肉カテゴリからの検索 --
+            $query->where('meal_type', "鶏肉");
+            foreach ($str_words as $search_word){
+                $query->where('recipe_nm_kana', 'like', "%$search_word%");
+            }
+            $searchword = '[鶏肉料理] ' . $request->search_word;
+        }else if ($request->search_type == 4){
+        //-- 豚肉カテゴリからの検索 --
+            $query->where('meal_type', "豚肉");
+            foreach ($str_words as $search_word){
+                $query->where('recipe_nm_kana', 'like', "%$search_word%");
+            }
+            $searchword = '[豚肉料理] ' . $request->search_word;
+        }else if ($request->search_type == 5){
+        //-- 牛肉カテゴリからの検索 --
+            $query->where('meal_type', "牛肉");
+            foreach ($str_words as $search_word){
+                $query->where('recipe_nm_kana', 'like', "%$search_word%");
+            }
+            $searchword = '[牛肉料理] ' . $request->search_word;
+        }else if ($request->search_type == 6){
+        //-- 魚カテゴリからの検索 --
+            $query->where('meal_type', "魚");
+            foreach ($str_words as $search_word){
+                $query->where('recipe_nm_kana', 'like', "%$search_word%");
+            }
+            $searchword = '[魚料理] ' . $request->search_word;
+        }else if ($request->search_type == 7){
+        //-- 挽き肉カテゴリからの検索 --
+            $query->where('meal_type', "挽き肉");
+            foreach ($str_words as $search_word){
+                $query->where('recipe_nm_kana', 'like', "%$search_word%");
+            }
+            $searchword = '[挽き肉料理] ' . $request->search_word;
+        }else if ($request->search_type == 8){
+        //-- 一品物カテゴリからの検索 --
+            $query->where('meal_type', "一品もの");
+            foreach ($str_words as $search_word){
+                $query->where('recipe_nm_kana', 'like', "%$search_word%");
+            }
+            $searchword = '[一品もの] ' . $request->search_word;
+        }
+        $search_result = $query->orderBy('last_date', 'desc')->get();
+
+        $message="";
+        return view('cookings.search.search-result', ['message'       => $message,
+                                                      'searched_word' => $searchword, 
+                                                      'search_result' => $search_result]);
+    }
+
+    //public function cooking_similar_search_exec(Request $request)
+    public function cooking_similar_search_exec(SearchRequest $request)
+    {//-- 類似検索処理＆結果表示
+
+        $str_word = $request->search_word;
+        $cookings = Cooking::orderBy('recipe_id','asc')->get();
+
+        //echo $str_word."<br>";
+
+        //-- ワークテーブルクリア
+        $record = WkSimilarMenu::where('rep_user_id',Auth::id())->delete();
+
+        //-- 今回編集データを新たに挿入
+        foreach ($cookings as $cooking){
+            //echo $cooking->recipe_id. " "; // $keyにインデックスの文字が入っている
+            //echo $cooking->recipe_nm;
+
+            $sim = similar_text($str_word, $cooking->recipe_nm, $perc);
+
+            //echo " ->  POINT: $sim ($perc %)";
+            //echo "<br>\n";
+
+            $savedata = [
+                'recipe_id'   => $cooking->recipe_id,
+                'rep_user_id' => Auth::id(),
+                'similarity'  => $perc,
+            ];
+
+            $db_data = new WkSimilarMenu;
+            $db_data->fill($savedata)->save();
+
+            //print_r($savedata);
+            //echo "<br>";
+        }
+
+        //-- 作成したワークテーブルを基にしたビューからデータ取得
+        $query = VwSimilarShow::query();
+        $query->where('rep_user_id', Auth::id());
+        $search_result = $query->orderBy('similarity', 'desc')->take(20)->get();
+
+        $message="【類似検索】";
+        return view('cookings.search.search-result', ['message'       => $message,
+                                                      'searched_word' => $str_word, 
+                                                      'search_result' => $search_result]);
+    }
+
+    public function cooking_search_callendar_history($recipe_id)
+    {//-- 過去メニュー検索画面(特定のrecipe_idを含む日のみ）
+
+        //--レシピ名取得
+        $recipe = Cooking::where('recipe_id', $recipe_id)->get();
+
+        //--過去記録から特定のレシピのものを取り出す
+        $records    = Record::where('recipe_id', $recipe_id)->get();
+        //-- 日付データの配列を作成
+        $target_date=array();
+        foreach ($records as $record){
+
+            array_push($target_date, $record->meal_date);
+
+        }
+
+        //$where = array('2021/01/01','2021/03/01');
+
+        $query = VwCookingShow::query();
+
+        //$query->whereIn('meal_date', ['2021/01/01','2021/03/01']);
+        $query->whereIn('meal_date', $target_date);
+        $search_result = $query->orderBy('meal_date', 'desc')->orderBy('virtual_id', 'desc')->get();
+
+        $message = '「' . $recipe[0]->recipe_nm. '」を含む献立一覧';
+        return view('cookings.search.search-result-days', ['searched_word' => $message, 
+                                                      'search_result' => $search_result]);
+    }
+
+    public function cooking_search_callendar($start_date,$end_date)
+    {//-- 過去メニュー検索画面
+        //$query = VwSearchResult::query();
+        //$query = VwCookingShow::orderBy('meal_date','desc')->orderBy('virtual_id', 'desc')->paginate(10);
+        $query = VwCookingShow::query();
+
+        $query->where('meal_date', '>=', $start_date)->where('meal_date', '<=', $end_date);
+        $search_result = $query->orderBy('meal_date', 'desc')->orderBy('virtual_id', 'desc')->get();
+
+        if ($start_date == $end_date){
+            $message = $start_date.'の献立';
+        }else{
+            $message = $start_date.'～'.$end_date.'の献立';
+        }
+
+        return view('cookings.search.search-result-days', ['searched_word' => $message, 
+                                                      'search_result' => $search_result]);
+    }
+
+    public function suggestion_menu($target_date, $order_num)
+    {// 食事提案メニュー画面
+        //$recipe_id=100;
+        //$meal_type = MealType::orderBy('meal_id', 'asc')->get();
+        //$cooking_info        = Cooking::where('recipe_id', $recipe_id)->get();
+        ////$type_master        = TypeMaster::where('type_id', 2)->get();
+        //$type_master        = TypeMaster::where('type_id', 2)->where('kind_id','<',9)->orderBy('kind_id','asc')->get();
+        //$food_list = FoodList::orderBy('list_id', 'asc')->get();
+        //return view('cookings.suggestions.suggest-menu', ['recipe_id' => $recipe_id,
+        //                                                 'cooking_info' => $cooking_info,
+        //                                                 'type_master' => $type_master,
+        //                                                 'food_list' => $food_list,
+        //                                                 'meal_type' => $meal_type]);
+
+        //$target_date = date("Y-m-d");
+        $month_range_1 = date("m", strtotime('-1 month'));
+        $month_range_2 = date("m");
+        $month_range_3 = date("m", strtotime('+1 month'));
+
+        $raw_sql = "select * from cooking.trend('".$target_date."', 0)";
+        $query_nm = DB::select(DB::raw($raw_sql));
+        $recommend['pork']      = $query_nm[0]->pork; 
+        $recommend['beef']      = $query_nm[0]->beef; 
+        $recommend['chicken']   = $query_nm[0]->chicken; 
+        $recommend['fish']      = $query_nm[0]->fish; 
+        $recommend['ala_carte'] = $query_nm[0]->ala_carte; 
+        $recommend['minced']    = $query_nm[0]->minced; 
+
+        //// 最大値をもつキー値を取得する
+        //$recommend_recipe=array_keys($recommend, max($recommend));
+        ////echo $recommend_recipe[0];
+
+        // 指定された順位のキー値を取得する
+        arsort($recommend);
+        $sort_counter = 0;
+        foreach($recommend as $key => $value){
+            $sort_counter++;
+            if ($sort_counter == $order_num)
+            {// 指定の順番のキー値を入れる
+               $recommend_recipe[0] = $key;
+            }
+        }
+        //echo $recommend_recipe[0]."<br>";
+
+        $search_word = '鶏肉';
+        if ($recommend_recipe[0] == 'pork')      $search_word = '豚肉';
+        if ($recommend_recipe[0] == 'beef')      $search_word = '牛肉';
+        if ($recommend_recipe[0] == 'chicken')   $search_word = '鶏肉';
+        if ($recommend_recipe[0] == 'fish')      $search_word = '魚';
+        if ($recommend_recipe[0] == 'ala_carte') $search_word = '一品物';
+        if ($recommend_recipe[0] == 'minced')    $search_word = '挽き肉';
+
+        $query = VwSearchResult::query();
+        //-- 料理名からの検索 --
+        $query->where('meal_type', $search_word);
+        $query->where('last_date', '<' , date("Y-m-d",strtotime("-14 day")));
+        $query->where(function($query) use($month_range_1,$month_range_2,$month_range_3){
+                $query->where(DB::raw('to_char(last_date,\'mm\')'), '=', $month_range_1)
+                    ->orWhere(DB::raw('to_char(last_date,\'mm\')'), '=', $month_range_2)
+                    ->orWhere(DB::raw('to_char(last_date,\'mm\')'), '=', $month_range_3);
+        });
+
+        $search_result = $query->take(20)->orderBy('repeated','desc')->orderBy('last_date', 'desc')->get();
+        $search_count  = $query->count();
+
+        if ($search_count < 1) {
+            $message = "次のお食事のおすすめは".$search_word."料理ですが・・・申し訳ございません、この時期のおすすめの記録がございませんでした。";
+        } else {
+            $message="次のお食事のおすすめは".$search_word."料理ですね。この時期におすすめのものを順にピックアップいたしました。";
+        }
+        if ($order_num != 1) $message = "その".$message;
+        // 次の値（1～6を循環）    
+        $next_val = $order_num + 1; if($next_val > 6) $next_val=1;
+        $next_url = "/cooking/suggestion_menu/".$target_date."/".(string)$next_val;
+
+        return view('cookings.suggestions.suggest-result', ['message'       => $message,
+                                                      'target_date'   => $target_date,
+                                                      'searched_word' => $search_word,
+                                                      'next_url'      => $next_url,
+                                                      'search_result' => $search_result]);
+
+    }
+
+    public function extractKeywords(string $input, int $limit = -1): array
+    {//-- 検索文字の空白分割用関数
+        $matches = [];
+        preg_replace_callback(
+            '/""(*SKIP)(*FAIL)|"([^"]++)"|([^"\p{Z}\p{Cc}]++)/u',
+            function (array $match) use (&$matches) {
+                $matches[] = $match[2] ?? $match[1];
+            },
+            $input,
+            $limit,
+            $_,
+            PREG_SET_ORDER
+        );
+        return $matches;
+    }
+
+    public function cooking_show()
+    {//-- メニュー記録一覧表示
+        $cooking_show = VwCookingShow::orderBy('meal_date','desc')->orderBy('virtual_id', 'desc')->paginate(10);
+        return view('cookings.cook-show', ['cooking_shows' => $cooking_show]);
+    }
+    public function cooking_show_detail($recipe_id)
+    {//-- メニュー記録詳細表示
+        $cooking_info        = Cooking::where('recipe_id', $recipe_id)->get();
+        $cooking_show_detail = CookingRecipe::where('recipe_id', $recipe_id)->get();
+        return view('cookings.cook-show-detail', ['cooking_show_details' => $cooking_show_detail, 'cooking_info' => $cooking_info]);
+    }
+    public function cooking_show_detail2($recipe_id)
+    {//-- メニュー記録詳細表示
+        $cooking_info        = Cooking::where('recipe_id', $recipe_id)->get();
+        $cooking_show_detail = CookingRecipe::where('recipe_id', $recipe_id)->get();
+        return view('cookings.cook-show-detail2', ['cooking_show_details' => $cooking_show_detail, 'cooking_info' => $cooking_info]);
+    }
+
+    public function archive_index($recipe_id)
+    {//-- 食事記録作成画面
+        $meal_type = MealType::orderBy('meal_id', 'asc')->paginate(10);
+        $cooking_info = Cooking::where('recipe_id', $recipe_id)->get();
+        //$db_data = Record::orderBy('rec_id', 'asc')->paginate(10);
+        return view('cookings.records.record-archive', ['recipe_id' => $recipe_id, 
+                                                         'cooking_info' => $cooking_info,
+                                                         'meal_type' => $meal_type]);
+    }
+
+    public function archive_edit($rec_id, $recipe_id)
+    {//-- 食事記録編集画面
+        $meal_type = MealType::orderBy('meal_id', 'asc')->get();
+        $record    = Record::where('rec_id', $rec_id)->get();
+
+        //-- 複数の記録に使われているかの確認
+        $cooking_count   = Record::where('recipe_id', $recipe_id)->count();
+        if ($cooking_count > 1){
+            $flg_enable_del_menu = false;
+        }else{
+            $flg_enable_del_menu = true;
+        }
+
+        $cooking   = Cooking::where('recipe_id', $recipe_id)->get();
+        return view('cookings.records.record-edit', 
+                    ['meal_type' => $meal_type,
+                     'record' => $record,
+                     'cooking' => $cooking,
+                     'flg_enable_del_menu' => $flg_enable_del_menu
+                    ]);
+    }
+    public function archive_edit2($rec_id, $recipe_id)
+    {//-- 食事記録編集画面
+        $meal_type = MealType::orderBy('meal_id', 'asc')->get();
+        $record    = Record::where('rec_id', $rec_id)->get();
+
+        //-- 複数の記録に使われているかの確認
+        $cooking_count   = Record::where('recipe_id', $recipe_id)->count();
+        if ($cooking_count > 1){
+            $flg_enable_del_menu = false;
+        }else{
+            $flg_enable_del_menu = true;
+        }
+
+        $cooking   = Cooking::where('recipe_id', $recipe_id)->get();
+        return view('cookings.records.record-edit2',
+                    ['meal_type' => $meal_type,
+                     'record' => $record,
+                     'cooking' => $cooking,
+                     'flg_enable_del_menu' => $flg_enable_del_menu
+                    ]);
+    }
+
+    public function archive_store(VwSearchResult01_Request $request)
+    {//-- 食事記録保存処理
+        // -- 既存レシピの記録の場合と、新規の場合 --
+        if ($request->recipe_id > 0) {
+            //--既存レシピの場合
+            $target_recipe_id = $request->recipe_id;
+            $message = "既存レシピから新規登録しました";
+        }else{
+            //--新規登録の場合
+            //--  新規の場合でも、名称とURLが合致する場合は既存とみなす
+            //--  複数の記録に使われているかの確認
+
+            if (is_null($request->ref_url)){
+                //-- URLがない場合は、名称の合致とURLの（NULLでの）合致が条件
+                $cooking_other   = Cooking::where('recipe_nm', $request->recipe_nm)->
+                                            where('ref_url', $request->ref_url)->
+                                            orderBy('recipe_id', 'desc')->get();
+            }else{
+                //-- URLがある場合は、URLの合致のみで合致判定
+                $cooking_other   = Cooking::where('ref_url', $request->ref_url)->
+                                            orderBy('recipe_id', 'desc')->get();
+            }
+
+
+            if ($cooking_other->isEmpty()){
+                //-- レシピ名、URLともに合致するデータが存在しない(通常の新規登録）
+                $maxRecipeId = Cooking::max('recipe_id');
+                $target_recipe_id = $maxRecipeId + 1;
+
+                $cooking_savedata = [
+                    'recipe_id' => $maxRecipeId + 1,
+                    'recipe_nm' => $request->recipe_nm,
+                    'ref_url'   => $request->ref_url,
+                    'dish_id'   => 0,
+                ];
+                $db_data = new Cooking;
+                $db_data->fill($cooking_savedata)->save();
+                $message = "新規登録しました";
+
+            }else{
+                //-- レシピ名、URLともに合致するデータあり（既存のレシピデータで記録する）
+                $target_recipe_id = $cooking_other[0]->recipe_id;
+                $message = "合致した既存レシピから新規登録しました";
+            }
+
+        }
+
+        $maxRecId = Record::max('rec_id');
+        $record_savedata = [
+            'rec_id'    => $maxRecId + 1,
+            'meal_date' => $request->meal_date,
+            'meal_id'   => $request->meal_time,
+            'recipe_id' => $target_recipe_id,
+            'flg_sch'   => 1,
+            'score'     => 0,
+            'memo'      => '',
+        ];
+
+        $db_data = new Record;
+        $db_data->fill($record_savedata)->save();
+
+        return redirect('/cooking/record/rec_meal/0')->with('poststatus', $message);
+
+    }
+
+    public function archive_update(Request $request)
+    {//-- 食事記録保存処理
+        //
+        $targetRecipeId = $request->recipe_id;
+        $targetRecId    = $request->rec_id;
+
+        $cooking_savedata = [
+            'recipe_id' => $targetRecipeId,
+            'recipe_nm' => $request->recipe_nm,
+            'ref_url'   => $request->ref_url,
+            'dish_id'   => 0,
+        ];
+
+        $record_savedata = [
+            'rec_id'    => $targetRecId,
+            'meal_date' => $request->meal_date,
+            'meal_id'   => $request->meal_time,
+            'recipe_id' => $targetRecipeId,
+            'flg_sch'   => 1,
+            'score'     => 0,
+            'memo'      => '',
+        ];
+
+        //$db_data = new Record;
+        //$db_data->fill($record_savedata)->save();
+        //$db_data->fill($record_savedata->all())->save();
+        $record = Record::where('rec_id', $targetRecId)->update($record_savedata);
+
+        //$db_data = new Cooking;
+        //$db_data->fill($cooking_savedata)->save();
+        //$db_data->fill($cooking_savedata->all())->save();
+        $cooking = Cooking::where('recipe_id', $targetRecipeId)->update($cooking_savedata);
+
+        return redirect('/cooking/show')->with('poststatus', 'データを更新しました');
+
+    }
+
+    public function archive_index_recipe($recipe_id)
+    {//-- レシピ記録作成画面
+        $meal_type = MealType::orderBy('meal_id', 'asc')->paginate(10);
+        $cooking_info = Cooking::where('recipe_id', $recipe_id)->get();
+        $meal_kind = MealKind::orderBy('kind_id', 'asc')->get();
+        return view('cookings.records.record-recipe', ['recipe_id' => $recipe_id, 
+                                                         'cooking_info' => $cooking_info,
+                                                         'meal_kind' => $meal_kind]);
+    }
+
+    //public function archive_store_recipe(VwSearchResult01_Request $request)
+    public function archive_store_recipe(CookingRequest $request)
+    {//-- レシピ記録保存処理
+        // -- 既存レシピの記録の場合と、新規の場合 --
+        if ($request->recipe_id > 0) {
+            $target_recipe_id = $request->recipe_id;
+        }else{
+            $maxRecipeId = Cooking::max('recipe_id');
+            $target_recipe_id = $maxRecipeId + 1;
+
+            $cooking_savedata = [
+                'recipe_id' => $maxRecipeId + 1,
+                'recipe_nm' => $request->recipe_nm,
+                'ref_url'   => $request->ref_url,
+                'dish_id'   => 0,
+                'kind_id'   => $request->kind_id,
+            ];
+            $db_data = new Cooking;
+            $db_data->fill($cooking_savedata)->save();
+        }
+
+        return redirect('/cooking/record/rec_recipe/0')->with('poststatus', '新規登録しました');
+
+    }
+    public function archive_delete1($rec_id)
+    {//-- 食事記録削除処理(記録のみ)
+
+        $record = Record::findOrFail($rec_id);
+
+        $record->delete();
+
+        return redirect('/cooking/show')->with('poststatus', 'データ(記録のみ)を削除しました');
+    }
+
+
+    public function archive_delete2($rec_id, $recipe_id)
+    {//-- 食事記録削除処理(記録とレシピ両方とも削除)
+
+        $record = Record::findOrFail($rec_id);
+        $cooking = Cooking::findOrFail($recipe_id);
+
+        $record->delete();
+        $cooking->delete();
+
+        return redirect('/cooking/show')->with('poststatus', 'データ(記録とレシピの両方)を削除しました');
+    }
+
+    public function cooking_edit_detail($recipe_id)
+    {//-- レシピ詳細編集画面
+        $cooking_info        = Cooking::where('recipe_id', $recipe_id)->get();
+        $cooking_show_detail = CookingRecipe::where('recipe_id', $recipe_id)->get();
+        return view('cookings.cook-edit-detail', ['cooking_show_details' => $cooking_show_detail, 'cooking_info' => $cooking_info]);
+    }
+
+    public function archive_edit_recipe_detail(Request $request)
+    {//-- レシピ編集結果保存処理
+        // 画像保存
+        //if (!is_null($request->imagedata)){
+        if (strlen($request->imagedata) > 3000){//何もcanvasになくてもちょっと送られてくるみたいなので・・・
+            $image = $request->imagedata;  // your base64 encoded
+            $image = str_replace('data:image/jpeg;base64,', '', $image);
+            $image = str_replace('data:image/png;base64,', '', $image);
+            $image = str_replace(' ', '+', $image);
+
+            $imageName = $request->recipe_id.'.jpg';
+            //\File::delete(public_path(). '/photos/recipes/' . $imageName);
+            \File::put(public_path(). '/photos/recipes/' . $imageName, base64_decode($image));
+        }
+
+        //-- レシピ(COOKING)の更新 --
+        $cooking_savedata = [
+            'recipe_id'   => $request->recipe_id,
+            'recipe_nm'   => $request->recipe_nm,
+            'memo'        => $request->recipe_memo,
+            'scrawled_at' => date("Y-m-d H:i:s"),
+        ];
+
+        $record = Cooking::where('recipe_id', $request->recipe_id)->update($cooking_savedata);
+        print_r($cooking_savedata);
+        echo"<br>";
+
+        //-- レシピ詳細(COOKING_RECIPE)の追加 --
+        //---- 材料・分量での連想配列作成 ---
+        $ingredients=array();
+        $ingredient_name="";
+        $ingredient_amount="";
+        foreach ($request->all() as $key => $val){
+            if(strpos($key,'ingredient') !== false){ 
+              //キーが材料名（ingredient）だった場合
+              $ingredient_name = $val;
+            }
+            if(strpos($key,'amount') !== false){ 
+              //キーが分量（amount）だった場合
+              $ingredients = $ingredients + array($ingredient_name => $val);
+            }
+        }
+
+        //-- 編集前のレシピデータ削除
+        CookingRecipe::where('recipe_id', '=', $request->recipe_id)->delete();
+
+        //-- 今回編集データを新たに挿入
+        foreach ($ingredients as $key => $val){
+            echo $key; // $keyにインデックスの文字が入っている
+            echo "'s value is ";
+            echo $val; // $valueにデータが入っている
+            echo "<br>";
+            $maxRecId = CookingRecipe::max('rec_id');
+            $recipe_savedata = [
+                'rec_id'      => $maxRecId + 1,
+                'recipe_id'   => $request->recipe_id,
+                'ingredients' => $key,
+                'amount'      => $val,
+                'for_num'     => $request->for_num,
+            ];
+
+            $db_data = new CookingRecipe;
+            $db_data->fill($recipe_savedata)->save();
+
+            print_r($recipe_savedata);
+            echo "<br>";
+        }
+
+        $rtn_url='/cooking/edit_detail/'.strval($request->recipe_id);
+        return redirect($rtn_url)->with('poststatus', 'データを更新しました');
+
+
+    }
+
+
+    public function cooking_analysis($date_s, $date_e)
+    {//指定日付範囲での各料理種別回数を返す
+
+       $keys = ['鶏肉','豚肉','牛肉','挽き肉','魚','一品もの','その他'];
+
+       $raw_sql = "select * from cooking.tendency('".$date_s."','".$date_e."')";
+       $query_nm = DB::select(DB::raw($raw_sql));
+
+       $counts = [$query_nm[0]->chicken,$query_nm[0]->pork,$query_nm[0]->beef,$query_nm[0]->minced,
+                  $query_nm[0]->fish,$query_nm[0]->ala_carte,$query_nm[0]->other];
+
+       // 円グラフの中の色
+       $bg_colors = ["#ff6347", "#ffa500", "#deb887", "#eee8aa", "#1e90ff", "#00fa9a", "#7b68ee"];
+       // 円グラフの枠の色（全部白）
+       $bd_colors = ["#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff"];
+
+       // 料理種別日付リスト取得
+       $mealkind_days = VwMealKindDay::where([['meal_date','>=',$date_s],['meal_date','<=',$date_e]])->orderBy('meal_date', 'desc')->get();
+
+       // 分析範囲
+       $target_date['start']= $date_s;
+       $target_date['end']  = $date_e;
+
+       return view('cookings.analysis.analysis',compact('keys','counts','bg_colors','bd_colors','mealkind_days', 'target_date'));
+       //return view('cookings.analysis.analysis',['keys'          => $keys,'counts'         => $counts,
+       //                                          'bg_colors'     => $bg_colors,'bd_colors' => $bd_colors,
+       //                                          'mealkind_days' => $mealkind_days]);
+    }
+}

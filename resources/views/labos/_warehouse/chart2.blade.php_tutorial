@@ -1,0 +1,71 @@
+@extends('layouts.common')
+ 
+@section('title', 'HomeManagement Web')
+@section('keywords', 'naoshi,yuko')
+@section('description', '山下家の情報一括管理')
+@include('section.head')
+ 
+@include('section.header')
+ 
+@section('content')
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.5.0/chart.min.js"></script>
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment-with-locales.min.js"></script>
+  <script type="text/javascript" src="https://js.cybozu.com/luxon/1.24.1/luxon.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-streaming@latest/dist/chartjs-plugin-streaming.min.js"></script>
+
+<canvas id="myChart"></canvas>
+
+<script>
+const config = {
+  type: 'line',
+  data: {
+    datasets: [
+      {
+        label: 'データセット 1',
+        backgroundColor: 'rgba(255, 99, 132, 0.5)',
+        borderColor: 'rgb(255, 99, 132)',
+        borderDash: [8, 4],
+        fill: true,
+        data: []
+      },
+      {
+        label: 'データセット 2',
+        backgroundColor: 'rgba(54, 162, 235, 0.5)',
+        borderColor: 'rgb(54, 162, 235)',
+        cubicInterpolationMode: 'monotone',
+        fill: true,
+        data: []
+      }
+    ]
+  },
+  options: {
+    scales: {
+      x: {
+        type: 'realtime',
+        realtime: {
+          delay: 2000,
+          onRefresh: chart => {
+            chart.data.datasets.forEach(dataset => {
+              dataset.data.push({
+                x: Date.now(),
+                y: Math.random()
+              });
+            });
+          }
+        }
+      }
+    }
+  }
+};
+
+const myChart = new Chart(
+  document.getElementById('myChart'),
+  config
+);
+
+</script>
+
+@endsection
+ 
+@include('section.footer')
+

@@ -1,0 +1,225 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+
+//-- 一言日記用リクエスト --//
+use App\Http\Requests\Tweets\TweetRequest;
+
+//-- モデル ---//
+use App\Models\Cookings\VwCookingShow;
+use App\Models\Weather\VwDailyReport;
+use App\Models\Tweets\Tweet;
+use App\Models\Tweets\VwTweetShow;
+
+//-- ユーザーＩＤ取得用 ---//
+use Illuminate\Support\Facades\Auth;
+
+class HomeController extends Controller
+{
+    /**
+     * Create a new controller instance.
+     *
+     * @return void
+     */
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
+
+    /**
+     * Show the application dashboard.
+     *
+     * @return \Illuminate\Contracts\Support\Renderable
+     */
+    public function index()
+    {
+        $cooking_show = VwCookingShow::where('meal_date',date("Y-m-d"))->orderBy('virtual_id', 'desc')->get();
+        $tweet = Tweet::where('tweet_date',date("Y-m-d"))->get();
+
+        $weather_report = VwDailyReport::where('wea_date',date("Y-m-d"))->get();
+        $weather_report_tommorrow = VwDailyReport::where('wea_date',date('Y-m-d', strtotime('+1 day')))->get();
+
+        $weather_name           = "XX";
+        $weather_name_tommorrow = "XX";
+        if (count($weather_report) > 0){
+            $weather_name = $weather_report[0]->day_weather;
+        }
+        if (count($weather_report_tommorrow) > 0){
+            $weather_name_tommorrow = $weather_report_tommorrow[0]->day_weather;
+        }
+
+        $weather_file_name           = $this->get_weather_img($weather_name);
+        $weather_file_name_tommorrow = $this->get_weather_img($weather_name_tommorrow);
+
+        return view('home', ['cooking_shows'        => $cooking_show, 'tweets' => $tweet, 
+                             'weather_reports'      => $weather_report, 
+                             'weather_reports_tmrw' => $weather_report_tommorrow, 
+                             'file_name'            => $weather_file_name,
+                             'file_name_tmrw'       => $weather_file_name_tommorrow]);
+    }
+    public function get_weather_img($w_name)
+    {
+        switch ($w_name ){
+            case 'Clear_to_Clear':
+                $weather_file_name = '100.png';
+                break;
+            case 'Clear_to_Clouds':
+                $weather_file_name = '110.png';
+                break;
+            case 'Clear_to_Rain':
+                $weather_file_name = '112.png';
+                break;
+            case 'Clear_to_Snow':
+                $weather_file_name = '115.png';
+                break;
+            case 'Clouds_to_Clouds':
+                $weather_file_name = '200.png';
+                break;
+            case 'Clouds_to_Clear':
+                $weather_file_name = '210.png';
+                break;
+            case 'Clouds_to_Rain':
+                $weather_file_name = '212.png';
+                break;
+            case 'Clouds_to_Snow':
+                $weather_file_name = '215.png';
+                break;
+            case 'Rain_to_Rain':
+                $weather_file_name = '300.png';
+                break;
+            case 'Rain_to_Clear':
+                $weather_file_name = '311.png';
+                break;
+            case 'Rain_to_Clouds':
+                $weather_file_name = '313.png';
+                break;
+            case 'Rain_to_Snow':
+                $weather_file_name = '314.png';
+                break;
+            case 'Snow_to_Snow':
+                $weather_file_name = '400.png';
+                break;
+            case 'Snow_to_Clear':
+                $weather_file_name = '411.png';
+                break;
+            case 'Snow_to_Clouds':
+                $weather_file_name = '413.png';
+                break;
+            case 'Snow_to_Rain':
+                $weather_file_name = '414.png';
+                break;
+            default:
+                $weather_file_name = '999.png';
+                break;
+        }
+        $weather_file_name = "/images/weather/" . $weather_file_name;
+
+        return $weather_file_name;
+    }
+
+    public function photos_show($photo_id)
+    {
+        switch ($photo_id ){
+            case 2019051201:
+                $photo_path = "photos/marriage_pro/*";
+                $photo_title = "結婚式　（オークラ撮影）";
+                break;
+            case 2019051202:
+                $photo_path = "photos/marriage/*";
+                $photo_title = "結婚式　（純子姉さん撮影）";
+                break;
+            default:
+                $photo_path = "marriage";
+                $photo_title='';
+                break;
+        }
+
+        $photoinfos['title'] = $photo_title;
+        $photoinfos['path']  = $photo_path;
+
+        return view('records.memories.photos-show',['photoinfo' => $photoinfos]);
+    }
+
+    public function memories_home()
+    {
+        return view('records.memories.memories-home');
+    }
+
+    public function tweet()
+    {//-- 一言日記登録画面
+       return view('records/tweets/tweet-archive');
+    }
+
+    public function tweet_store(TweetRequest $request)
+    {//-- 一言日記保存処理
+        //
+        $maxRecId = Tweet::max('rec_id');
+        $nextRecId = $maxRecId + 1;
+        $tweet_savedata = [
+            'rec_id'      => $nextRecId,
+            'tweet_date'  => $request->tweet_date,
+            'tweet'       => $request->tweet,
+            'ref_url'     => $request->ref_url,
+            'rep_user_id' => Auth::id(),
+        ];
+
+        $db_data = new Tweet;
+        $db_data->fill($tweet_savedata)->save();
+
+        // 画像保存
+        //if (!is_null($request->imagedata)){
+        if (strlen($request->imagedata) > 3000){//何もcanvasになくてもちょっと送られてくるみたいなので・・・
+            $image = $request->imagedata;  // your base64 encoded
+            $image = str_replace('data:image/jpeg;base64,', '', $image);
+            $image = str_replace('data:image/png;base64,', '', $image);
+            $image = str_replace(' ', '+', $image);
+
+            $imageName = 'diary'.$nextRecId.'.jpg';
+            \File::put(public_path(). '/photos/diary/' . $imageName, base64_decode($image));
+        }
+
+        //return redirect('/hm_twitter/tweet')->with('poststatus', '新規登録しました');
+        return redirect('/')->with('poststatus', '新規登録しました');
+
+    }
+    public function tweet_show()
+    {//--  一言日記一覧表示
+        $tweet_show = VwTweetShow::orderBy('tweet_date','desc')->orderBy('virtual_id', 'desc')->paginate(10);
+        return view('records.tweets.tweet-show', ['diary_shows' => $tweet_show]);
+    }
+
+
+
+//---  以下　検証用 --------------
+    public function chart_index()
+    {//グラフ検証
+       // ソート済みの配列を返す
+       $keys = ['家','研究室','外出','学内','長期不在'];
+       $counts = [10,4,3,2,1];
+       return view('labos.chart',compact('keys','counts'));
+    }
+    public function speech_to_text_index()
+    {//音声入力検証
+       return view('labos.speech_to_text');
+    }
+    public function rows_index()
+    {//jQueryでの行追加削除検証
+       return view('labos.rows');
+    }
+    public function test_rows(Request $request)
+    {// rows_indexからPOSTされたものの確認
+      $count = $request['row_length'];
+      for($i=0; $i<$count; $i++)
+      {
+        $result[$i]['fluit'] = $request['fluit'][$i];
+        $result[$i]['quantity'] = $request['quantity'][$i];
+      }
+      echo print_r($result, true);
+    }
+    public function upload_test()
+    {//画像アップロードテスト
+       return view('labos.tweet-test');
+    }
+}

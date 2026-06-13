@@ -1,0 +1,150 @@
+@extends('layouts.common')
+
+@section('title', 'HomeManagement Web')
+@section('keywords', 'naoshi,yuko')
+@section('description', '山下家の情報一括管理')
+@include('section.head')
+<link href="/css/hm_style_camera.css" rel="stylesheet">
+<script type="text/javascript" src="/js/hm_rec_script.js"></script>
+@include('section.header')
+
+@section('content')
+<div class="container">
+    <h5> <a href='javascript:history.back();'>一言日記 編集画面</a></h5>
+    @if (session('poststatus'))
+        <div class="alert alert-success mt-4 mb-4">
+            {{ session('poststatus') }}
+        </div>
+    @endif
+
+    <form class="meal-input-form" method="post" action="/hm_twitter/tweet_update" autocomplete="off" name="tweetform">
+      @csrf
+      <input type="hidden" id="rec_id"    name="rec_id"    value='{{ $tweet_data[0]->rec_id }}'    >
+
+      <h6>日付</h6>
+      <div class="item">
+        <input type="date" id="tweet_date" name="tweet_date" value='{{ date('Y-m-d', strtotime($tweet_data[0]->tweet_date)) }}'>
+      </div>
+
+      <p>
+      <h6>内容</h6>
+      <table style="border:none;">
+          <tr><td style="border:none;">
+              <div class="inputWithIcon">
+                  <input type="text"  id="tweet" 
+                         name="tweet" 
+                         class="form-control {{ $errors->has('tweet') ? 'is-invalid' : '' }} btn-input"
+                         placeholder="つぶやいてください" value='{{$tweet_data[0]->tweet }}'>
+
+                  <i class="fab fa-twitter fa-lg fa-fw" aria-hidden="true"></i>
+                       @if ($errors->has('tweet'))
+                           <div class="invalid-feedback">
+                                {{ $errors->first('tweet') }}
+                           </div>
+                       @endif
+
+              </div>
+          </td><td width=20px style="border:none;">
+              <a href="#" class="btn-real btn-real2" onclick="recording('tweet','micicon');">
+                  <i id="micicon" class="fas fa-microphone"></i>
+              </a>
+          </td></tr>
+
+      </table>
+
+      <div class="inputWithIcon">
+          <input type="text"  id="ref_url" 
+                 name="ref_url" 
+                 class="form-control {{ $errors->has('ref_url') ? 'is-invalid' : '' }}"
+                 placeholder="参照URL" value='{{$tweet_data[0]->ref_url }}'>
+          <i class="fas fa-globe fa-lg fa-fw" aria-hidden="true"></i>
+               @if ($errors->has('ref_url'))
+                   <div class="invalid-feedback">
+                        {{ $errors->first('ref_url') }}
+                   </div>
+               @endif
+      </div>
+
+      <h6>画像アップロード</h6>
+      <div style="display: flex;">
+          <!-- カメラボタン -->
+          <label class="btn-real btn-real3" style="margin-left:10px; margin-bottom:10px" id="camera_btn">
+             <i class="fas fa-camera fa-lg"></i>
+          </label>
+
+          <!-- ファイル選択 -->
+          <label for="file_photo" class="btn-real btn-real3" style="margin-left:10px" id="file-input">
+             <i class="fas fa-file-image fa-lg"></i>
+             <input type="file" id="file_photo" style="display:none;">
+          </label>
+
+          <!-- ファイルドラッグ＆ドロップ -->
+          <div id="drop-zone" style="color:gray; float:right; border: 1px dashed; 
+                                     border-radius:10px; padding: 8px; width:190px; height:40px; margin-left:10px;">
+              ここにドラッグ＆ドロップ
+          </div>
+      </div>
+
+
+      <!-- カメラ映像が描画されます。 -->
+      <video id="myVideo" style="background-color: #000; width:100%;height:100%; display:none;" autoplay></video>
+      <canvas id="canvas" style="border:0px solid;width:100%;height:100%; display:none;"></canvas>
+      <canvas id="canvas_show" style="border:0px solid;width:300px;height:300px; display:none;"></canvas>
+       <input type="hidden" name="imagedata" id="imagedata" value="">
+
+      <div class="py-3">
+          <a class="btn btn-secondary" href="javascript:history.back()">
+                戻る
+          </a>
+         <button id="submit_btn" class="btn btn-primary">
+               更新
+         </button>
+      </div>
+      <div class="py-3">
+         <a class="btn btn-danger" onClick="return confirm('レシピ情報は残して削除します。よろしいですか？');" 
+            href="/cooking/record/rec_del1/{{$record[0]->rec_id}}">
+               記録のみ削除
+         </a>
+      </div>
+
+    </form>
+
+</div>
+
+<script type="text/javascript" src="/js/hm_camera_script.js"></script>
+
+<script type="text/javascript">
+@if (file_exists('/opt/home-management/www/public/photos/diary/diary'.$tweet_data[0]->rec_id.'.jpg')) 
+
+  // CANVAS用の処理
+  var ctx = canvas.getContext('2d');
+  var w = 400;
+  var h = 400;
+  canvas.setAttribute("width", w);
+  canvas.setAttribute("height", h);
+
+  clearphoto() ;
+
+  var img = new Image();
+  img.src = "/photos/diary/diary{{$tweet_data[0]->rec_id}}.jpg";
+  ctx.clearRect(0, 0, canvas.width,canvas.height);
+
+  canvas_show.style.display ="block";
+
+  img.onload = function() {
+      var scale = Math.min(canvas.width / img.naturalWidth, canvas.height / img.naturalHeight);
+      var x = (canvas.width / 2) - (img.naturalWidth / 2) * scale;
+      canvas.setAttribute("height", img.naturalHeight * scale);
+      canvas.setAttribute("width", img.naturalWidth * scale);
+      canvas.setAttribute("height", img.naturalHeight * scale);
+      ctx.drawImage(img, 0, 0, img.naturalWidth * scale, img.naturalHeight * scale);
+
+      show_on_canvas();
+  }
+
+@endif
+</script>
+
+@endsection
+@include('section.footer')
+

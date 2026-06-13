@@ -1,0 +1,207 @@
+@extends('layouts.common')
+
+@section('title', 'HomeManagement Web')
+@section('keywords', 'naoshi,yuko')
+@section('description', '山下家の情報一括管理')
+@include('section.head')
+<!-- 画像操作用のCSS＆JS -->
+<link href="/css/hm_style_camera.css" rel="stylesheet">
+<script type="text/javascript" src="/js/hm_rec_script.js"></script>
+@include('section.header')
+
+@section('content')
+<div class="container">
+    <h5> <a href='javascript:history.back();'>献立君レシピ 編集画面</a></h5>
+    @if (session('poststatus'))
+        <div class="alert alert-success mt-4 mb-4">
+            {{ session('poststatus') }}
+        </div>
+    @endif
+
+    <form class="meal-input-form" method="post" action="/hm_twitter/tweet_update" autocomplete="off" name="tweetform">
+      @csrf
+      <input type="hidden" id="recipe_id"    name="recipe_id"    value='{{ $cooking_info[0]->recipe_id }}'    >
+
+      <h6>料理写真アップロード</h6>
+      <div style="display: flex;">
+          <!-- カメラボタン -->
+          <label class="btn-real btn-real3" style="margin-left:10px; margin-bottom:10px" id="camera_btn">
+             <i class="fas fa-camera fa-lg"></i>
+          </label>
+
+          <!-- ファイル選択 -->
+          <label for="file_photo" class="btn-real btn-real3" style="margin-left:10px" id="file-input">
+             <i class="fas fa-file-image fa-lg"></i>
+             <input type="file" id="file_photo" style="display:none;">
+          </label>
+
+          <!-- ファイルドラッグ＆ドロップ -->
+          <div id="drop-zone" style="color:gray; float:right; border: 1px dashed; 
+                                     border-radius:10px; padding: 8px; width:190px; height:40px; margin-left:10px;">
+              ここにドラッグ＆ドロップ
+          </div>
+      </div>
+
+      <!-- カメラ映像が描画されます。 -->
+      <video id="myVideo" style="background-color: #000; width:100%;height:100%; display:none;" autoplay></video>
+      <canvas id="canvas" style="border:0px solid;width:100%;height:100%; display:none;"></canvas>
+      <canvas id="canvas_show" style="border:0px solid;width:300px;height:300px; display:none; margin:0 auto;"></canvas>
+       <input type="hidden" name="imagedata" id="imagedata" value="">
+
+
+
+
+
+    <table class="table table-hover hm-table01 hm-table02" id="p2146-2-table">
+        <thead>
+        <tr>
+            <th colspan=2>レシピ名</th>
+        </tr><tr>
+            <td colspan=2>
+                  <input type="text"  id="recipe_title" 
+                         name="recipe_title" 
+                         class="form-control {{ $errors->has('recipe_title') ? 'is-invalid' : '' }} btn-input"
+                         placeholder="レシピ名" value='{{$cooking_info[0]->recipe_nm}}'>
+            </td>
+        </tr>
+        </thead>
+        <thead>
+        <tr>
+            <th class="td-center">材料名<p></th>
+            <th>
+               分量
+                  <input type="text"  id="tweet" 
+                         name="tweet" 
+                         class="form-control {{ $errors->has('tweet') ? 'is-invalid' : '' }} btn-input"
+                         placeholder="「1～2人分」など" 
+                  @if (count($cooking_show_details) > 0)
+                           value='{{$cooking_show_details[0]->for_num}}'>
+                  @else
+                           value=''>
+                  @endif
+            </th>
+        </tr>
+        </thead>
+        <tbody id="tbl" id="p2146-2-tbody">
+        @foreach ($cooking_show_details as $cooking_show_detail)
+            <tr>
+                <td class="td-center" >
+                  <input type="text"  id="tweet" 
+                         name="tweet" 
+                         class="form-control {{ $errors->has('tweet') ? 'is-invalid' : '' }} btn-input"
+                         placeholder="レシピ名" 
+                           value='{{$cooking_show_detail->ingredients}}'>
+                </td>
+                <td class="td-center" >
+                  <input type="text"  id="tweet" 
+                         name="tweet" 
+                         class="form-control {{ $errors->has('tweet') ? 'is-invalid' : '' }} btn-input"
+                         placeholder="レシピ名" 
+                           value='{{$cooking_show_detail->amount}}'>
+        <input value="+" type="button" class="addList" />　
+        <input value="-" type="button" class="removeList" />
+                </td>
+            </tr>
+        @endforeach
+
+    <tr><td class="td-center td-no-border" style="border: 0px none;"colspan=2>
+    </td></tr>
+        </tbody>
+    </table>
+
+      <div class="py-3">
+          <a class="btn btn-secondary" href="javascript:history.back()">
+                戻る
+          </a>
+         <button id="submit_btn" class="btn btn-primary">
+               更新
+         </button>
+      </div>
+
+     <!-- テスト -->
+    <!-- CSS -->
+    <link href="/css/hm_style_tbl.css" rel="stylesheet">
+    <!-- JS ＆ tablednd(CDN) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/TableDnD/0.9.1/jquery.tablednd.js" integrity="sha256-d3rtug+Hg1GZPB7Y/yTcRixO/wlI78+2m08tosoRn7A=" crossorigin="anonymous"> </script>
+    <script type="text/javascript" src="/js/hm_tbl_script.js"></script>
+<script type="text/javascript">
+
+$(document).ready(function() {
+    $("#table-1").tableDnD();
+});
+</script>
+
+     <table class="table tablesorter-bootstrap table-management" id="table-1">
+	<thead>
+		<tr class="nodrop nodrag">
+			<th style="width: 5%;"></th>
+			<th style="width: 20%;">name</th>
+			<th style="width: 20%;">type</th>
+			<th style="width: 10%;">public</th>
+			<th style="width: 40%;">description</th>
+			<th style="width: 5%;"></th>
+		</tr>
+	</thead>
+	<tbody>
+            <tr>
+			<!-- 三本線の画像 -->
+			<td class="handle">
+                            <i class="fas fa-bars fa-lg fa-fw" aria-hidden="true"></i>
+                        </td>
+			<td>name</td>
+			<td>type</td>
+			<td>public</td>
+			<td>description</td>
+			<!-- マイナスボタンの画像 -->
+			<td class="MinusBtn">
+                            <i class="fas fa-minus-circle fa-lg fa-fw MinusBtn" aria-hidden="true"></i>
+                        </td>
+		</tr>
+	</tbody>
+    </table>
+    <!-- プラスボタンの画像 -->
+    <i class="fas fa-plus-circle fa-lg fa-fw PlusBtn" aria-hidden="true"></i>
+
+
+    </form>
+
+</div>
+
+<script type="text/javascript" src="/js/hm_camera_script.js"></script>
+
+<!-- 保存済みの画像のキャンパス表示 -->
+<script type="text/javascript">
+@if (file_exists('/opt/home-management/www/public/photos/recipes/'.$cooking_info[0]->recipe_id.'.jpg')) 
+
+  // CANVAS用の処理
+  var ctx = canvas.getContext('2d');
+  var w = 400;
+  var h = 400;
+  canvas.setAttribute("width", w);
+  canvas.setAttribute("height", h);
+
+  clearphoto() ;
+
+  var img = new Image();
+  img.src = "/photos/recipes/{{$cooking_info[0]->recipe_id}}.jpg";
+  ctx.clearRect(0, 0, canvas.width,canvas.height);
+
+  canvas_show.style.display ="block";
+
+  img.onload = function() {
+      var scale = Math.min(canvas.width / img.naturalWidth, canvas.height / img.naturalHeight);
+      var x = (canvas.width / 2) - (img.naturalWidth / 2) * scale;
+      canvas.setAttribute("height", img.naturalHeight * scale);
+      canvas.setAttribute("width", img.naturalWidth * scale);
+      canvas.setAttribute("height", img.naturalHeight * scale);
+      ctx.drawImage(img, 0, 0, img.naturalWidth * scale, img.naturalHeight * scale);
+
+      show_on_canvas();
+  }
+
+@endif
+</script>
+
+@endsection
+@include('section.footer')
+

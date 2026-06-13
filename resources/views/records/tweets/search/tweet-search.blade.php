@@ -1,0 +1,69 @@
+@extends('layouts.common')
+
+@section('title', 'HomeManagement Web')
+@section('keywords', 'naoshi,yuko')
+@section('description', '山下家の情報一括管理')
+@include('section.head')
+<script type="text/javascript" src="/js/hm_rec_script.js"></script>
+
+@include('section.header')
+
+@section('content')
+<div class="container">
+    <h5> <a href='javascript:history.back();'>一言日記検索</a></h5>
+    @if (session('poststatus'))
+        <div class="alert alert-success mt-4 mb-4">
+            {{ session('poststatus') }}
+        </div>
+    @endif
+
+    <form class="meal-input-form" method="post" action="/hm_twitter/tweet_search_exec" autocomplete="off">
+      @csrf
+      <a class="btn btn-primary" href="/hm_twitter/tweet_search_days">
+            日付から検索
+      </a>
+      <a class="btn btn-primary" href="/hm_twitter/hashtag_search">
+            タグ検索
+      </a>
+      <p>
+      <h6>検索ワード(ひらがなカタカナは自動検索されます)</h6>
+      <table style="border:none;">
+          <tr><td style="border:none;">
+              <div class="inputWithIcon">
+                  <input type="text"  id="search_word"  autocomplete=”on”
+                         name="search_word"
+                         class="form-control  btn-input {{ $errors->has('search_word') ? 'is-invalid' : '' }}"
+                         placeholder="5個まで空白でAND検索できます">
+                        @if ($errors->has('search_word'))
+                            <div class="invalid-feedback">
+                                {{ $errors->first('search_word') }}
+                            </div>
+                        @endif
+
+                  <i class="fas fa-search fa-lg fa-fw" aria-hidden="true"></i>
+
+              </div>
+          </td><td width=20px style="border:none;">
+              <a href="#" class="btn-real btn-real2" onclick="recording('search_word','micicon')">
+                  <i id="micicon" class="fas fa-microphone"></i>
+              </a>
+          </td></tr>
+      </table>
+
+      <div class="py-3">
+          <a class="btn btn-secondary" href="javascript:history.back()">
+                戻る
+          </a>
+         <button type="submit" class="btn btn-primary">
+               検索
+         </button>
+
+      </div>
+    </form>
+
+</div>
+
+@endsection
+@include('section.footer')
+
+

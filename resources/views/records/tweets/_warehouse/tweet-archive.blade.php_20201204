@@ -1,0 +1,91 @@
+@extends('layouts.common')
+
+@section('title', 'HomeManagement Web')
+@section('keywords', 'naoshi,yuko')
+@section('description', '山下家の情報一括管理')
+@include('section.head')
+
+@include('section.header')
+
+@section('content')
+<div class="container">
+    <h5> <a href='javascript:history.back();'>一言日記</a></h5>
+    @if (session('poststatus'))
+        <div class="alert alert-success mt-4 mb-4">
+            {{ session('poststatus') }}
+        </div>
+    @endif
+
+    <form class="meal-input-form" method="post" action="/hm_twitter/tweet_rec" autocomplete="off">
+      @csrf
+      <h6>日付</h6>
+      <div class="item">
+        <input type="date" id="tweet_date" name="tweet_date" value='{{ date('Y-m-d') }}'>
+      </div>
+
+      <p>
+      <h6>内容</h6>
+      <table style="border:none;">
+          <tr><td style="border:none;">
+              <div class="inputWithIcon">
+                  <input type="text"  id="tweet" 
+                         name="tweet" 
+                         class="form-control {{ $errors->has('tweet') ? 'is-invalid' : '' }} btn-input"
+                         placeholder="つぶやいてください">
+
+                  <i class="fab fa-twitter fa-lg fa-fw" aria-hidden="true"></i>
+                       @if ($errors->has('tweet'))
+                           <div class="invalid-feedback">
+                                {{ $errors->first('tweet') }}
+                           </div>
+                       @endif
+
+              </div>
+          </td><td width=20px style="border:none;">
+              <a href="#" class="btn-real btn-real2" onclick="recognition.start()">
+                  <i class="fas fa-microphone"></i>
+              </a>
+          </td></tr>
+      </table>
+
+      <div class="inputWithIcon">
+          <input type="text"  id="ref_url" 
+                 name="ref_url" 
+                 class="form-control {{ $errors->has('ref_url') ? 'is-invalid' : '' }}"
+                 placeholder="参照URL">
+          <i class="fas fa-globe fa-lg fa-fw" aria-hidden="true"></i>
+               @if ($errors->has('ref_url'))
+                   <div class="invalid-feedback">
+                        {{ $errors->first('ref_url') }}
+                   </div>
+               @endif
+      </div>
+
+      <div class="py-3">
+          <a class="btn btn-secondary" href="javascript:history.back()">
+                戻る
+          </a>
+         <button type="submit" class="btn btn-primary">
+               登録
+         </button>
+<!--
+         <a class="btn btn-success" href="/cooking/show">
+               記録確認
+         </a>
+-->
+      </div>
+    </form>
+</div>
+
+<script>
+var recognition = new webkitSpeechRecognition();
+  recognition.onresult = function(event) {
+  if (event.results.length > 0) {
+    tweet.value = event.results[0][0].transcript;
+  }
+}
+</script>
+
+@endsection
+@include('section.footer')
+

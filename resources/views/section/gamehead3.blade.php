@@ -1,0 +1,58 @@
+@section('head')
+<meta charset="UTF-8">
+<title>@yield('title')</title>
+<meta name="description" itemprop="description" content="@yield('description')">
+<meta name="keywords" itemprop="keywords" content="@yield('keywords')">
+<meta name="viewport" content="width=device-width">
+<link href="/css/app.css" rel="stylesheet">
+<link href="/css/hm_style.css" rel="stylesheet">
+<link href="https://use.fontawesome.com/releases/v5.6.1/css/all.css" rel="stylesheet">
+<link href="https://netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.min.css" rel="stylesheet">
+<link rel="icon" href="/favicon.ico" >
+<link rel="manifest" href="/manifest.json">
+<!-- ServiceWorkerの登録 -->
+<script>
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js')
+      .then((reg) => {
+        console.log('Service worker registered.', reg);
+      });
+}
+</script>
+@yield('pageCss')
+<script src="/js/jquery.js"></script>
+<script src="/js/script.js"></script>
+<script src="/js/jquery.smoothscroll.js"></script>
+<script src="/js/jquery.scrollshow.js"></script>
+<script src="/js/jquery.slideshow.js"></script>
+<script>
+$(function($){
+	$('html').smoothscroll({easing : 'swing', speed : 1000, margintop : 50, headerfix : $('header'), outersmooth : true});
+	$('.totop').scrollshow({position : 500});
+	$('.slide').slideshow({
+		touch        : false,
+		bgImage      : false,
+		autoSlide    : true,
+		effect       : 'fade',
+		repeat       : true,
+		easing       : 'swing',
+		interval     : 5000,
+		duration     : 1000,
+		imgHoverStop : false,
+		navHoverStop : false,
+		navImg       : false,
+		navImgCustom : false,
+		navImgSuffix : ''
+	});
+});
+</script>
+<!--[if lt IE 9]>
+        <script src="/js/html5shiv.js"></script>
+        <script src="/js/css3-mediaqueries.js"></script>
+<![endif]-->
+
+<link rel="shortcut icon" href="/games/retrogamecafe/TemplateData/favicon.ico">
+<link rel="stylesheet" href="/games/retrogamecafe/TemplateData/style.css">
+
+@endsection
+

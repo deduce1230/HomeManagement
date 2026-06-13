@@ -1,0 +1,51 @@
+@section('header')
+	<div class="inner">
+                <h1><img src="favicon.ico" alt="HOME MANAGEMENT WEB">
+			HOME MANAGEMENT WEB
+		</h1>
+		<div class="spMenuWrap">
+			<div id="spMenu"><span id="navBtn"><span id="navBtnIcon"></span></span></div>
+		</div>
+		<nav class="gnav">
+			<ul>
+				<li><a href="/">ホーム</a></li>
+				<li><a href="calendar">食事メニュー</a></li>
+				<li class="subnav"><a href="/">思い出</a>
+					<ul>
+						<li class="subnav"><a href="/">結婚前</a>
+							<ul>
+								<li><a href="#">初めての誕生日</a></li>
+								<li><a href="#">モンブランにて</a></li>
+								<li><a href="#">クイーンズホテルにて</a></li>
+								<li><a href="#">両親初顔合わせ</a></li>
+							</ul>
+						</li>
+						<li class="subnav"><a href="/">結婚式</a>
+							<ul>
+								<li><a href="photos001">純子撮影</a></li>
+								<li><a href="photos002">オークラ撮影</a></li>
+								<li><a href="movies001">ムービー</a></li>
+							</ul>
+						</li>
+						<li class="subnav"><a href="/">恭子ママ喜寿祝旅行</a>
+							<ul>
+								<li><a href="#">集合写真</a></li>
+								<li><a href="#">面白動画</a></li>
+							</ul>
+						</li>
+					</ul>
+				</li>
+				<li class="subnav"><a href"/">実験室</a>
+					<ul>
+						<li><a href="bbs">掲示板テスト</a></li>
+						<li><a href="talking">トーキングテスト</a></li>
+						<li><a href="framework">PostgreSQLテスト１</a></li>
+						<li><a href="labo">ゲームテスト</a></li>
+						<li><a href="game01">ゲーム：エスペン</a></li>
+					</ul>
+				</li>
+			</ul>
+		</nav>
+	</div><!-- /.inner -->
+@endsection
+

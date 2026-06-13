@@ -1,0 +1,26 @@
+label.check_btn span {
+  font-size: 1.3em ;
+  vertical-align: top;
+}
+
+label input[type="checkbox"] {
+    display:none;
+}
+
+label input[type="checkbox"] ~ i.fa.fa-square-o{
+    color: #c8c8c8;    display: inline;    vertical-align: bottom;
+}
+label input[type="checkbox"] ~ i.fa.fa-check-square-o{
+    display: none;
+}
+label input[type="checkbox"]:checked ~ i.fa.fa-square-o{
+    display: none;
+}
+label input[type="checkbox"]:checked ~ i.fa.fa-check-square-o{
+    color: #7AA3CC;    display: inline;
+}
+label:hover input[type="checkbox"] ~ i.fa {
+color: #7AA3CC;
+}
+
+

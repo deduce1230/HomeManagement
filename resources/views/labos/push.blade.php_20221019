@@ -1,0 +1,24 @@
+@extends('layouts.common')
+
+@section('title', 'HomeManagement Web')
+@section('keywords', 'naoshi,yuko')
+@section('description', '山下家の情報一括管理')
+@section('pageCss')
+  <link href="/css/hm_style_line.css" rel="stylesheet" type="text/css">
+@endsection
+@include('section.head')
+<script type="text/javascript" src="/js/hm_rec_script.js"></script>
+<script src='/webpush.js'></script>
+@include('section.header')
+
+@section('content')
+  <h5>WebPushテスト</h5>
+
+  <div class="line__container">
+
+    <a href="javascript:allowWebPush()">WebPushを許可する</a>
+
+  </div>
+@endsection
+@include('section.footer')
+

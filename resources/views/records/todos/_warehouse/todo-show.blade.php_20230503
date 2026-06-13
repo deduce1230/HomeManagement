@@ -1,0 +1,203 @@
+@extends('layouts.common')
+
+@section('title', 'HomeManagement Web')
+@section('keywords', 'naoshi,yuko')
+@section('description', '山下家の情報一括管理')
+@section('pageCss')
+  <link href="/css/lightbox/photos-style.css" rel="stylesheet" type="text/css">
+  <link rel="stylesheet" href="/css/lightbox/lightbox.css">
+  <script src="/js/lightbox/lightbox-plus-jquery.min.js"></script>
+  <link rel="stylesheet" href="/css/hm_radio.css">
+  <link rel="stylesheet" href="/css/hm_style_select.css">
+  <link rel="stylesheet" href="/css/hm_style_acordion.css">
+  <link rel="stylesheet" href="/css/hm_spinner.css">
+@endsection
+@include('section.head')
+<script type="text/javascript" src="/js/hm_rec_script.js"></script>
+
+@include('section.header')
+
+@section('content')
+<h5><a href='javascript:history.back()'>TO-DO リスト</a></h5>
+<!--
+<div class="container row justify-content-start">
+-->
+    @if (session('poststatus'))
+        <div class="hm-alert">
+        <div class="alert alert-success mt-4 mb-4">
+            {{ session('poststatus') }}
+        </div>
+        </div>
+    @endif
+
+
+    <input id="todo_cat_list" class="acd-check" type="checkbox" checked="checked">
+    <label class="acd-label" for="todo_cat_list">新規作成</label>
+    <div class="acd-content">
+      <form class="meal-input-form" method="post" action="/hm_todo/list_store" autocomplete="off">
+      @csrf
+
+        <div class="hm_select">
+            <select required name="cat_id">
+        <?php $cnt_check = 0 ?>
+        @foreach ($todo_cats as $todo_cat)
+        	<option value="{{ $todo_cat->cat_id }}">{{ $todo_cat->cat_nm }}</option>
+        @endforeach
+            </select>
+        </div>
+        <div>
+            <input type="date" id="fin_until" name="fin_until" >
+            (期限なしなら入力不要)
+        </div>
+        <table class="td-no-border">
+            <tr><td class="td-no-border">
+                <div class="inputWithIcon">
+                          <input type="text"  id="todo_mission"  autocomplete=”on”
+                                 name="todo_mission" 
+                                 class="form-control  btn-input {{ $errors->has('todo_mission') ? 'is-invalid' : '' }}"
+                                 placeholder="TODO内容を記載してください">
+                                @if ($errors->has('todo_mission'))
+                                    <div class="invalid-feedback">
+                                        {{ $errors->first('todo_mission') }}
+                                    </div>
+                                @endif
+
+                          <i class="fas fa-search fa-lg fa-fw" aria-hidden="true"></i>
+                </div>
+            </td><td class="td-no-border">
+                <div>
+                      <a href="#" class="btn-real btn-real2" onclick="recording('todo_mission','micicon');">
+                          <i id="micicon" class="fas fa-microphone"></i>
+                      </a>
+                </div>
+            </td></tr>
+
+            <tr rowspan=2><td class="td-no-border">
+                <div class="inputWithIcon">
+                <input type="text"  id="ref_url" value=""
+                       name="ref_url"
+                       class="form-control {{ $errors->has('ref_url') ? 'is-invalid' : '' }}"
+                       placeholder="参照URL">
+                <i class="fas fa-globe fa-lg fa-fw" aria-hidden="true"></i>
+                     @if ($errors->has('ref_url'))
+                         <div class="invalid-feedback">
+                              {{ $errors->first('ref_url') }}
+                         </div>
+                     @endif
+                </div>
+            </td></tr>
+
+            <tr><td class="td-no-border">
+                 <div class="spinner_area" style="display:flex">
+                     <input type="number" value="7" style="width:60px" class="counter1" 
+                            data-max="365" data-min="0" name="alert_days">
+                     <input type="button" value="＋" class="btnspinner" data-cal="1" data-target=".counter1">
+                     <input type="button" value="－" class="btnspinner" data-cal="-1" data-target=".counter1">
+                     <div style="margin-left:5px">
+                     日前からアラート<br><font size=1>(期限なしなら無効)</font>
+                     </div>
+                 </div>
+            </td></tr>
+        </table>
+        <div class="col text-center">
+         <button type="submit" class="btn btn-primary btn-sm btn-block">
+               リスト新規登録
+         </button>
+        </div>
+      </form>
+    </div><p>
+
+<form class="meal-input-form" method="post" action="/hm_todo/list_update" autocomplete="off">
+      @csrf
+@foreach ($todo_cats as $todo_cat)
+    <table class="table table-hover hm-table01">
+        <thead>
+        <tr>
+            <th colspan=2>{{ $todo_cat->cat_nm }}</th>
+        </tr>
+        </thead>
+        <tbody id="tbl">
+        <?php $counter=0 ?>
+        @foreach ($todo_shows as $todo_show)
+            <?php $counter++ ?>
+            @if ($todo_show->cat_id == $todo_cat->cat_id)
+            <tr>
+                <td class="td-no-right" rowspan = 1 style='width:65%'>
+                    <div class="hm-div">
+                        <div class="setLeft">
+                            <label class="check_btn">
+                                <input type="hidden" name ='todo_rec_id{{$counter}}' value='{{ $counter }}'>
+                                <?php $is_checked = ($todo_show->flg_fin > 0) ? 'checked' : ''; ?>
+                                <input type="checkbox" name='todo_flg_fin{{$counter}}' {{ $is_checked }}>
+                                    <i class="fa fa-square-o fa-2x"></i>
+                                    <i class="fa fa-check-square-o fa-2x"></i>
+                                    <span> {{ $todo_show->mission }} </span>
+                                    <input type="hidden" name ='todo_mission{{$counter}}' value='{{ $todo_show->mission }}'>
+                                    <input type="hidden" name ='todo_cat_id{{$counter}}' value='{{ $todo_show->cat_id }}'>
+                            </label>
+                        </div>
+                        @if ($todo_show->ref_url)
+                        <div class="setRight">
+                            <a href="{{$todo_show->ref_url}}" class="btn-real">
+                                <i class="fas fa-globe"></i>
+                            </a>
+                        </div>
+                        @endif
+                    </div>
+                </td>
+                <td class="td-no-left" rowspan = 1>
+                    <div class="hm-div">
+                        <div class="setLeft">
+                           @if ($todo_show->fin_until)
+                             {{ $todo_show->fin_until }}
+                             <br>
+                             <font size=1>({{ $todo_show->alert_days }}日前にアラート)</font>
+                           @endif
+                        </div>
+                        <div class="setRight">
+                            <a tabindex="-1" class="btn-real">
+                                <i class="fas fa-trash remove"></i>
+                            </a>
+                        </div>
+                    </div>
+                    <input type="hidden" name ='todo_fin_until{{$counter}}' value='{{ $todo_show->fin_until }}'>
+                    <input type="hidden" name ='todo_alert_days{{$counter}}' value='{{ $todo_show->alert_days }}'>
+                    <input type="hidden" name ='todo_user_id{{$counter}}' value='{{ $todo_show->rep_user_id }}'>
+                    <input type="hidden" name ='todo_br{{$counter}}' value='9'>
+                </td>
+            </tr>
+            @endif
+        @endforeach
+
+        </tbody>
+    </table>
+@endforeach
+        <div class="col text-center">
+         <button type="submit" class="btn btn-primary btn-sm btn-block">
+               リスト更新
+         </button>
+         <br>
+         <a class="btn btn-secondary" href="javascript:history.back()">
+                更新せずに戻る
+         </a>
+         <p>
+        </div>
+</form>
+<!--
+</div>
+-->
+
+<script>
+$(function(){
+    $(document).on('click', '.remove', function() {
+        $(this).parents('tr').remove();
+    });
+});
+</script>
+
+<!-- スピナー用JS -->
+<script type="text/javascript"src="/js/hm_spinner.js"></script>
+
+@endsection
+
+@include('section.footer')

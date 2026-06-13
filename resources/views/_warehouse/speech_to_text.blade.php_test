@@ -1,0 +1,65 @@
+@extends('layouts.common')
+ 
+@section('title', 'HomeManagement Web')
+@section('keywords', 'naoshi,yuko')
+@section('description', '山下家の情報一括管理')
+@include('section.head')
+ 
+@include('section.header')
+ 
+@section('content')
+
+<div class="container">
+    <h1 class="text-center h1">Web Speech API テスト</h1>
+    <div id="content">
+      <input type="textarea" id="q" name="q" size=60>
+      <a href="#" class="btn-real btn-real2" onclick="recording_test_start('q','favIcon2');">
+          <i id="favIcon2" class="fas fa-microphone"></i>
+      </a>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.3/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/js/bootstrap.min.js"></script>
+
+    <script language="javascript" type="text/javascript" src="js/hm_script.js"></script>
+</div>
+
+<script language="javascript" type="text/javascript">
+function recording_test_start(area,mic_id){
+    var recognition = new webkitSpeechRecognition();
+    recognition.onresult = function(event) {
+      if (event.results.length > 0) {
+        document.getElementById(area).value = event.results[0][0].transcript;
+        recording_end(mic_id);
+      }
+    }
+    recording_start(mic_id);
+    recognition.start();
+}
+
+     function recording_start(mic_id){
+           fav(document.getElementById(mic_id));
+     }
+
+     function recording_end(mic_id){
+           fav(document.getElementById(mic_id));
+     }
+
+ function fav(obj) {
+    var icon = obj;
+      if (icon.classList.contains("fa-microphone")) {
+        icon.classList.remove("fa-microphone");
+        icon.classList.add("fa-microphone-alt");
+    } else {
+       icon.classList.remove("fa-microphone-alt");
+       icon.classList.add("fa-microphone");
+    }
+ }
+
+</script>
+
+@endsection
+ 
+@include('section.footer')
+

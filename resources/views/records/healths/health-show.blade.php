@@ -1,0 +1,152 @@
+@extends('layouts.common')
+
+@section('title', 'HomeManagement Web')
+@section('keywords', 'naoshi,yuko')
+@section('description', '山下家の情報一括管理')
+@section('pageCss')
+  <link href="/css/lightbox/photos-style.css" rel="stylesheet" type="text/css">
+  <link rel="stylesheet" href="/css/lightbox/lightbox.css">
+  <script src="/js/lightbox/lightbox-plus-jquery.min.js"></script>
+@endsection
+@include('section.head')
+
+@include('section.header')
+
+@section('content')
+<h5><a href='javascript:history.back()'>健康記録（{{$target_year."年".$target_month."月"}}）</a></h5>
+<!--
+<div class="container row justify-content-start">
+-->
+    @if (session('poststatus'))
+        <div class="alert alert-success mt-4 mb-4">
+            {{ session('poststatus') }}
+        </div>
+    @endif
+<meta name="csrf-token" content="{{ csrf_token() }}">
+
+                            <div class="hm-div" style="height:40px">
+                                <div class="setLeft">
+                                     <a class="btn btn-primary" href="/record/grid/{{$before_year}}/{{$before_month}}">
+                                         ＜＜先月
+                                     </a>
+                                </div>
+                                <div class="setMiddle" style="width:200px; left:42%">
+                                     <a class="btn btn-secondary" href="/record/chart/{{$target_year}}/{{$target_month}}">
+                                         グラフ画面
+                                     </a>
+                                </div>
+                                <div class="setRight">
+                                     <a class="btn btn-primary" href="/record/grid/{{$next_year}}/{{$next_month}}">
+                                         来月＞＞
+                                     </a>
+                                </div>
+                            </div>
+
+<table class="border-table">
+    <tbody>
+        <tr class="">
+            <th rowspan=4 >日付</th>
+            <th colspan=2 class="thin">血圧(Hmg)</th>
+            <th rowspan=4 >体重(kg)</th>
+            <th rowspan=4 >歩数(歩)</th>
+            <th rowspan=4 >腹囲(cm)</th>
+        </tr>
+        <tr class="">
+            <th class="thin">朝</th>
+            <th class="thin">夜</th>
+        </tr>
+        <tr class="">
+            <th class="thin" >上</th>
+            <th class="thin" >上</th>
+        </tr>
+        <tr class="">
+            <th class="thin" >下</th>
+            <th class="thin" >下</th>
+        </tr>
+
+        <?php $counter=-6; ?>
+        @foreach ($days as $day) 
+        <?php $counter+=7; ?>
+        <tr class="">
+            <td rowspan=2 class="center v-middle" id="test{{$counter}}" onchange="javascript:alert($this.value);">
+                    {{ date('m/d',strtotime($day)) }}({{ $healths[$day]['Week'] }})
+            </td>
+            <td class="center v-middle">
+                <div class="" contenteditable="true" onblur="set_data('{{ date('Y/m/d',strtotime($day)) }}',1,this,{{$user_id}});" tabindex="{{$counter}}">
+                    {{ $healths[$day]['Kind1'] }}
+                </div>
+            </td>
+            <td class="center v-middle">
+                <div class="" contenteditable="true" onblur="set_data('{{ date('Y/m/d',strtotime($day)) }}',3,this,{{$user_id}});" tabindex="{{$counter+2}}">
+                    {{ $healths[$day]['Kind3'] }}
+                </div>
+            </td>
+            <td rowspan=2 class="center v-middle">
+                <div class="" contenteditable="true" onblur="set_data('{{ date('Y/m/d',strtotime($day)) }}',5,this,{{$user_id}});" tabindex="{{$counter+4}}">
+                    {{ $healths[$day]['Kind5'] }}
+                </div>
+            </td>
+            <td rowspan=2 class="center v-middle">
+                <div class="" contenteditable="true" onblur="set_data('{{ date('Y/m/d',strtotime($day)) }}',6,this,{{$user_id}});" tabindex="{{$counter+5}}">
+                    {{ $healths[$day]['Kind6'] }}
+                </div>
+            </td>
+            <td rowspan=2 class="center v-middle">
+                <div class="" contenteditable="true" onblur="set_data('{{ date('Y/m/d',strtotime($day)) }}',7,this,{{$user_id}});" tabindex="{{$counter+6}}">
+                    {{ $healths[$day]['Kind7'] }}
+                </div>
+            </td>
+        </tr>
+        <tr class="">
+            <td class="center v-middle">
+                <div class="" contenteditable="true" onblur="set_data('{{ date('Y/m/d',strtotime($day)) }}',2,this,{{$user_id}});" tabindex="{{$counter+1}}">
+                    {{ $healths[$day]['Kind2'] }}
+               </div>
+            </td>
+            <td class="center v-middle">
+                <div class="" contenteditable="true" onblur="set_data('{{ date('Y/m/d',strtotime($day)) }}',4,this,{{$user_id}});" tabindex="{{$counter+3}}">
+                    {{ $healths[$day]['Kind4'] }}
+                </div>
+            </td>
+        </tr>
+        @endforeach
+          
+    </tbody>
+
+</table>
+
+<script>
+   //cell10 = document.getElementById('test10');
+   //cell10.style.background = '#e1e7f0';
+
+    function send_data(rec_kind, date_t, value, user_id){
+        //alert($('meta[name="csrf-token"]').attr('content'));
+        return $.ajax({
+            type: "POST",
+            url: "/record/chart/set_rec_data",
+            data:{ 'rec_date' : date_t, 'kind_id' : rec_kind, 'rec_val' : value, 'rep_user_id' : user_id },
+            dataType: "json",
+            scriptCharset: 'utf-8',
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            }
+        })
+        .done(function(result) {
+
+            console.log("SUCCESS");
+            console.log(result);
+
+        }).fail(function(result) {
+            console.log('ERROR');
+            console.log(result);
+        });
+    }
+
+    function set_data($_day,$_kind,$this,$_user_id) {
+        send_data($_kind, $_day, $this.innerHTML, $_user_id);
+    }
+
+</script>
+@endsection
+
+@include('section.footer')

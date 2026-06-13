@@ -1,0 +1,91 @@
+@extends('layouts.common')
+
+@section('title', 'HomeManagement Web')
+@section('keywords', 'naoshi,yuko')
+@section('description', '山下家の情報一括管理')
+@include('section.head')
+
+@include('section.header')
+
+@section('content')
+<h5><a href='javascript:history.back();'>バーチャルコックのおすすめメニュー</a></h5>
+<div class="comment">
+  <figure class="image">
+      <a href='{{ $next_url }}'>
+      <img src="/images/cookings/cook.png" alt="">
+      </a>
+  </figure>
+    <p class="text">{{$message}}</p>
+</div>
+
+<div class="container">
+    <div class="row justify-content-center">
+            @foreach ($search_result as $row_record)
+            <?php $img = "/photos/recipes/".$row_record->recipe_id.".jpg"; 
+                  if (!file_exists("/opt/home-management/www/public".$img)) {
+                       $img = "/photos/recipes/0.jpg";
+                  }
+            ?>
+
+                <div class="panel-menu">
+                    <div class="panel-menu_item  panel-menu_item-view">
+                          @if (strlen($row_record->last_date) > 0)
+
+                          <!-- リピート回数による評価表示 -->
+                          <?php
+                             if ($row_record->repeated < 1){
+                                 $evaluation = 128528;
+                             }elseif ($row_record->repeated == 1){
+                                 $evaluation = 128578;
+                             }elseif ($row_record->repeated < 5){
+                                 $evaluation = 128523;
+                             }elseif ($row_record->repeated < 10){
+                                 $evaluation = 129392;
+                             }else{
+                                 $evaluation = 128525;
+                             }
+                          ?>
+                          <font size=4>&#{{ $evaluation }}</font>
+                          <!-- 直近食事日（過去のこのレシピの日の食事一覧へのリンク) -->
+                          <strong><font color="darkslategray">{{$row_record->last_date}}</font></strong>
+                          <a href="/cooking/search_calendar_history/{{$row_record->recipe_id}}" 
+                                                        class="btn-real" style="vertical-align:middle">
+                              <i class="fas fa-list"></i>
+                          </a>
+                            @if (!(is_null($row_record->memo))) 
+                              <font size=4 color="white"><i class="fas fa-info-circle"></i></font>
+                            @endif
+                          
+                          @else
+                          ----/--/--
+                          @endif
+                          <a href="/cooking/record/rec_meal/{{$row_record->recipe_id}}">
+                                <div class="panel-menu_item_img_food"><img src={{$img}}></div>
+                          </a>
+                          <div class="caption">
+                              <a href="/cooking/show_detail/{{$row_record->recipe_id}}" class="btn-real">
+                                  <i class="fas fa-info"></i>
+                              </a>
+                              <a href="/cooking/record/rec_meal/{{$row_record->recipe_id}}" class="btn-real">
+                                  <i class="fas fa-utensils"></i>
+                              </a>
+                              @if ($row_record->ref_url == "#")
+                              <div class="btn-not-real">
+                                  <i class="fas fa-globe"></i>
+                              </div>
+                              @else
+                              <a href="{{$row_record->ref_url}}" class="btn-real">
+                                  <i class="fas fa-globe"></i>
+                              </a>
+                              @endif
+                          </div>
+                          <p> {{$row_record->recipe_nm}} </p>
+                    </div>
+                </div>
+            @endforeach
+    </div>
+
+</div>
+@endsection
+
+@include('section.footer')

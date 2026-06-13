@@ -1,0 +1,740 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+
+//-- 一言日記用リクエスト --//
+use App\Http\Requests\Tweets\TweetRequest;
+//-- TODO用リクエスト --//
+use App\Http\Requests\Todo\TodoRequest;
+
+//-- モデル ---//
+use App\Models\Cookings\VwCookingShow;
+use App\Models\Cookings\VwKindShow;
+use App\Models\Weather\VwDailyReport;
+use App\Models\Weather\VwHourlyReport;
+use App\Models\Tweets\Tweet;
+use App\Models\Tweets\VwTweetShow;
+use App\Models\Tweets\VwHashtagShow;
+use App\Models\Calendar\VwCalendar;
+
+use App\Models\Todo\VwTodoShow;
+use App\Models\Todo\TodoList;
+use App\Models\Todo\Category;
+
+//-- 記録 --//
+use App\Models\Unit;
+use App\Models\Records\DiaryRecord;
+use App\Models\Records\RecordKind;
+
+//-- アラート用 --//
+use App\Models\VwAlert;
+
+//-- ユーザーＩＤ取得用 ---//
+use Illuminate\Support\Facades\Auth;
+
+//-- 日付処理用 --//
+use Carbon\Carbon;
+
+class HomeController extends Controller
+{
+    /**
+     * Create a new controller instance.
+     *
+     * @return void
+     */
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
+
+    /**
+     * Show the application dashboard.
+     *
+     * @return \Illuminate\Contracts\Support\Renderable
+     */
+    public function index()
+    {//-- トップページ --//
+        return $this->get_the_day(date("Y-m-d"));
+    }
+
+    public function other_index($target_date)
+    {//-- トップページ(指定日表示) --//
+        return $this->get_the_day($target_date);
+    }
+
+    public function get_the_day($target_date)
+    {
+        //--指定日のカーボン
+        $dt = new Carbon($target_date);
+
+        //--本日以降の日付の場合は、本日に修正する
+        if ($dt->isFuture()){
+            $dt = Carbon::today();
+        }
+
+        //--指定日翌日のカーボン
+        $dt_tmrw = $dt->copy()->subDay();
+        $dt_tmrw->addDay(2);
+        //--指定日前日のカーボン
+        $dt_ysdy = $dt->copy()->subDay();
+        $dt_ysdy->addDay(0);
+
+        //-- TODO ALERT --
+        $alert_show = VwAlert::where('alert_date','<=',$dt)->orderBy('limit_date', 'desc')->get();
+
+        //-- 今日のご飯 --
+        $cooking_show = VwCookingShow::where('meal_date',$dt)->orderBy('virtual_id', 'desc')->get();
+        //-- 今日の一言 --
+        //$tweet = Tweet::where('tweet_date',$target_date)->get();
+        $tweet = Tweet::where('tweet_date',$dt)->get();
+        //-- 今日の天気 --
+        $weather_report = VwDailyReport::where('wea_date',$dt)->get();
+        //-- 明日の天気 --
+        $weather_report_tommorrow = VwDailyReport::where('wea_date',$dt_tmrw)->get();
+        //-- 今日の予定 --
+        //$calendars = VwCalendar::where([['start_date','<=',date("Y-m-d 23:59:59")],['end_date','>=',date("Y-m-d 00:00:00")]])->get();
+        $calendars = VwCalendar::where([['start_date','<=',$dt->format('Y-m-d 23:59:59')],['end_date','>=',$dt->format('Y-m-d 00:00:00')]])->get();
+        //-- 今日のご飯の種類 --
+        $cooking_kinds = VwKindShow::where('meal_date',$dt)->get();
+        if (!$cooking_kinds->isEmpty()){
+            $cooking_kind = $cooking_kinds[0]->main_meal;
+        } else {
+            $cooking_kind = '--';
+        }
+
+        //echo $dt."<br>";
+        //echo $dt_tmrw;
+
+        $weather_name           = "XX";
+        $weather_name_tommorrow = "XX";
+        if (count($weather_report) > 0){
+            $weather_name = $weather_report[0]->day_weather;
+        }
+        if (count($weather_report_tommorrow) > 0){
+            $weather_name_tommorrow = $weather_report_tommorrow[0]->day_weather;
+        }
+
+        $weather_file_name           = $this->get_weather_img($weather_name);
+        $weather_file_name_tommorrow = $this->get_weather_img($weather_name_tommorrow);
+
+        return view('home', ['cooking_shows'        => $cooking_show, 'tweets' => $tweet, 
+                             'weather_reports'      => $weather_report, 
+                             'weather_reports_tmrw' => $weather_report_tommorrow, 
+                             'file_name'            => $weather_file_name,
+                             'file_name_tmrw'       => $weather_file_name_tommorrow,
+                             'calendars'            => $calendars,
+                             'the_day'              => $dt,
+                             'the_day_after'        => $dt_tmrw,
+                             'the_day_before'       => $dt_ysdy,
+                             'cooking_kind'         => $cooking_kind,
+                             'alerts'               => $alert_show]);
+    }
+    public function get_weather_img($w_name)
+    {
+        switch ($w_name ){
+            case 'Clear':
+            case 'Clear_to_Clear':
+                $weather_file_name = '100.png';
+                break;
+            case 'Clear_to_Clouds':
+                $weather_file_name = '110.png';
+                break;
+            case 'Clear_to_Rain':
+                $weather_file_name = '112.png';
+                break;
+            case 'Clear_to_Snow':
+                $weather_file_name = '115.png';
+                break;
+            case 'Clouds':
+            case 'Clouds_to_Clouds':
+                $weather_file_name = '200.png';
+                break;
+            case 'Clouds_to_Clear':
+                $weather_file_name = '210.png';
+                break;
+            case 'Clouds_to_Rain':
+                $weather_file_name = '212.png';
+                break;
+            case 'Clouds_to_Snow':
+                $weather_file_name = '215.png';
+                break;
+            case 'Rain':
+            case 'Rain_to_Rain':
+                $weather_file_name = '300.png';
+                break;
+            case 'Rain_to_Clear':
+                $weather_file_name = '311.png';
+                break;
+            case 'Rain_to_Clouds':
+                $weather_file_name = '313.png';
+                break;
+            case 'Rain_to_Snow':
+                $weather_file_name = '314.png';
+                break;
+            case 'Snow':
+            case 'Snow_to_Snow':
+                $weather_file_name = '400.png';
+                break;
+            case 'Snow_to_Clear':
+                $weather_file_name = '411.png';
+                break;
+            case 'Snow_to_Clouds':
+                $weather_file_name = '413.png';
+                break;
+            case 'Snow_to_Rain':
+                $weather_file_name = '414.png';
+                break;
+            default:
+                $weather_file_name = '999.png';
+                break;
+        }
+        $weather_file_name = "/images/weather/" . $weather_file_name;
+
+        return $weather_file_name;
+    }
+
+    public function weather_detail($target_date)
+    {//--指定日～翌日の天気詳細表示
+
+        //--指定日のカーボン
+        $dt = new Carbon($target_date);
+
+        //--本日以降の日付の場合は、本日に修正する
+        if ($dt->isFuture()){
+            $dt = Carbon::today();
+        }
+
+        //--指定日翌日のカーボン
+        $dt_tmrw = $dt->copy()->subDay()->addDay();
+        $dt_tmrw->addDay();
+
+
+       //-- 指定日の天気(0) --
+       //$weather_report0 = VwHourlyReport::whereBetween('wea_date',[date("Y/m/d",strtotime("0 day")),date("Y/m/d",strtotime("0 day"))])->orderBy('wea_date','asc')->orderBy('wea_time','asc')->get();
+       $weather_report0 = VwHourlyReport::whereBetween('wea_date',[$dt->format('Y/m/d'),$dt->format('Y/m/d')])->orderBy('wea_date','asc')->orderBy('wea_time','asc')->get();
+       //-- 翌日の天気(1) --
+       //$weather_report1 = VwHourlyReport::whereBetween('wea_date',[date("Y/m/d",strtotime("+1 day")),date("Y/m/d",strtotime("+1 day"))])->orderBy('wea_date','asc')->orderBy('wea_time','asc')->get();
+       $weather_report1 = VwHourlyReport::whereBetween('wea_date',[$dt_tmrw->format('Y/m/d'),$dt_tmrw->format('Y/m/d')])->orderBy('wea_date','asc')->orderBy('wea_time','asc')->get();
+
+       $wea_date=array();
+       $max_temp=array();
+       foreach($weather_report0 as $weather_r){
+           $weathers0['temperature'][]=$weather_r->temperature;
+           $weathers0['humidity'][]   =$weather_r->humidity;
+           $weathers0['day'][]        =$weather_r->wea_date;
+           $weathers0['hour'][]       =$weather_r->wea_time;
+           $weathers0['weather'][]    =$this->get_weather_img($weather_r->weather);
+       }
+       foreach($weather_report1 as $weather_r){
+           $weathers1['temperature'][]=$weather_r->temperature;
+           $weathers1['humidity'][]   =$weather_r->humidity;
+           $weathers1['day'][]        =$weather_r->wea_date;
+           $weathers1['hour'][]       =$weather_r->wea_time;
+           $weathers1['weather'][]    =$this->get_weather_img($weather_r->weather);
+       }
+       //$weather_info['from'] = date("m/d",strtotime("0 day"));
+       //$weather_info['to']   = date("m/d",strtotime("+1 day"));
+       $weather_info['from'] = $dt->format('m/d');
+       $weather_info['to']   = $dt_tmrw->format('m/d');
+
+       //return view('weathers.today',compact('keys','counts'),['weather0' => $weathers0, 'weather1' => $weathers1, 'weather_info' => $weather_info]);
+       return view('weathers.today',['weather0' => $weathers0, 'weather1' => $weathers1, 'weather_info' => $weather_info]);
+    }
+
+    public function photos_show($photo_id)
+    {
+        switch ($photo_id ){
+            case 2019061801:
+                $photo_path = "photos/before_marriage/FirstBirthday/*";
+                $photo_title = "初めての誕生日";
+                break;
+            case 2018000000:
+                $photo_path = "photos/before_marriage/MontBlanc/*";
+                $photo_title = "モンブランの思い出";
+                break;
+            case 2019021701:
+                $photo_path = "photos/before_marriage/nekopen/*";
+                $photo_title = "ねこペンカフェ";
+                break;
+            case 2019120901:
+                $photo_path = "photos/before_marriage/Queens/*";
+                $photo_title = "クイーンズホテル";
+                break;
+            case 2019122401:
+                $photo_path = "photos/before_marriage/xmas_cake/*";
+                $photo_title = "初めてのクリスマス";
+                break;
+            case 2019051201:
+                $photo_path = "photos/marriage_pro/*";
+                $photo_title = "結婚式　（オークラ撮影）";
+                break;
+            case 2019051202:
+                $photo_path = "photos/marriage/*";
+                $photo_title = "結婚式　（純子姉さん撮影）";
+                break;
+            case 2019051203:
+                $photo_path = "videos/marriage/*";
+                $photo_title = "結婚式　（動画）";
+                break;
+            default:
+                $photo_path = "marriage";
+                $photo_title='';
+                break;
+        }
+
+        $photoinfos['title'] = $photo_title;
+        $photoinfos['path']  = $photo_path;
+
+        return view('records.memories.photos-show',['photoinfo' => $photoinfos]);
+    }
+
+    public function memories_home()
+    {
+        return view('records.memories.memories-home');
+    }
+
+    public function tweet()
+    {//-- 一言日記登録画面
+       return view('records/tweets/tweet-archive');
+    }
+
+    public function tweet_store(TweetRequest $request)
+    {//-- 一言日記保存処理
+        //
+        $maxRecId = Tweet::max('rec_id');
+        $nextRecId = $maxRecId + 1;
+
+        //--ハッシュタグの後ろに半角スペース追加
+        $hashtag = trim($request->hashtag) . " ";
+
+        $tweet_savedata = [
+            'rec_id'      => $nextRecId,
+            'tweet_date'  => $request->tweet_date,
+            'tweet'       => $request->tweet,
+            'hashtag'     => $hashtag,
+            'ref_url'     => $request->ref_url,
+            'rep_user_id' => Auth::id(),
+        ];
+
+        $db_data = new Tweet;
+        $db_data->fill($tweet_savedata)->save();
+
+        // 画像保存
+        //if (!is_null($request->imagedata)){
+        if (strlen($request->imagedata) > 3000){//何もcanvasになくてもちょっと送られてくるみたいなので・・・
+            $image = $request->imagedata;  // your base64 encoded
+            $image = str_replace('data:image/jpeg;base64,', '', $image);
+            $image = str_replace('data:image/png;base64,', '', $image);
+            $image = str_replace(' ', '+', $image);
+
+            $imageName = 'diary'.$nextRecId.'.jpg';
+            \File::put(public_path(). '/photos/diary/' . $imageName, base64_decode($image));
+        }
+
+        //return redirect('/hm_twitter/tweet')->with('poststatus', '新規登録しました');
+        return redirect('/')->with('poststatus', '新規登録しました');
+
+    }
+    public function tweet_show()
+    {//--  一言日記一覧表示
+        $message='一言日記一覧';
+        $tweet_show = VwTweetShow::orderBy('tweet_date','desc')->orderBy('virtual_id', 'desc')->paginate(10);
+        return view('records.tweets.tweet-show', ['diary_shows' => $tweet_show, 'messages' => $message]);
+    }
+
+    public function tweet_search()
+    {//--  一言日記検索
+        //$tweet_show = VwTweetShow::orderBy('tweet_date','desc')->orderBy('virtual_id', 'desc')->paginate(10);
+        return view('records.tweets.search.tweet-search');
+    }
+
+    public function tweet_search_exec(Request $request)
+    {//-- 検索処理＆結果表示
+
+        $str_kana_word = mb_convert_kana($request->search_word, "KVC");
+
+        $str_words = $this->extractKeywords($str_kana_word,5);
+
+        $query = VwTweetShow::query();
+
+        foreach ($str_words as $search_word){
+            $query->where('tweet_for_search', 'like', "%$search_word%");
+        }
+        //--検索結果のpaginateは、get送信では使えない
+        $search_result = $query->orderBy('tweet_date', 'desc')->get();
+
+        $message="";
+        return view('records.tweets.search.search-result', ['message'       => $message,
+                                                      'searched_word' => $request->search_word, 
+                                                      'search_result' => $search_result]);
+    }
+    public function extractKeywords(string $input, int $limit = -1): array
+    {//-- 検索文字の空白分割用関数
+        $matches = [];
+        preg_replace_callback(
+            '/""(*SKIP)(*FAIL)|"([^"]++)"|([^"\p{Z}\p{Cc}]++)/u',
+            function (array $match) use (&$matches) {
+                $matches[] = $match[2] ?? $match[1];
+            },
+            $input,
+            $limit,
+            $_,
+            PREG_SET_ORDER
+        );
+        return $matches;
+    }
+    public function tweet_search_days()
+    {//-- 過去日付検索画面(日付から検索)
+        return view('records.tweets.search.search-tweet-days');
+    }
+
+    public function tweet_search_callendar($start_date,$end_date)
+    {//-- 過去日記検索画面
+        $query = Tweet::query();
+
+        $query->where('tweet_date', '>=', $start_date)->where('tweet_date', '<=', $end_date);
+        $search_result = $query->orderBy('tweet_date', 'desc')->orderBy('rec_id', 'desc')->get();
+
+        if ($start_date == $end_date){
+            $message = $start_date.'の一言日記';
+        }else{
+            $message = $start_date.'～'.$end_date.'の一言日記';
+        }
+
+        $tweet_show = VwTweetShow::where('tweet_date', '>=', $start_date)->
+                      where('tweet_date', '<=', $end_date)->orderBy('tweet_date','desc')->
+                      orderBy('virtual_id', 'desc')->paginate(500);
+
+        $search_word="[" . $message . "]";;
+
+        //return view('records.tweets.tweet-show', ['diary_shows' => $tweet_show, 'messages' => $message]);
+        return view('records.tweets.search.search-result', ['messages'       => $message,
+                                                      'searched_word' => $search_word, 
+                                                      'search_result' => $tweet_show]);
+    }
+
+
+    public function tweet_edit($tweet_id)
+    {//一言日記編集画面
+        $tweet = Tweet::where('rec_id',$tweet_id)->get();
+        return view('records.tweets.tweet-edit', ['tweet_data' => $tweet]);
+    }
+
+    public function tweet_update(TweetRequest $request)
+    {//-- 一言日記更新処理
+        //
+        $targetRecId = $request->rec_id;
+
+        //--ハッシュタグの後ろに半角スペース追加
+        $hashtag = trim($request->hashtag) . " ";
+
+        $tweet_savedata = [
+            'rec_id'      => $targetRecId,
+            'tweet_date'  => $request->tweet_date,
+            'tweet'       => $request->tweet,
+            'hashtag'     => $hashtag,
+            'ref_url'     => $request->ref_url,
+            'rep_user_id' => Auth::id(),
+        ];
+
+        $record = Tweet::where('rec_id', $targetRecId)->update($tweet_savedata);
+
+        // 画像保存
+        //if (!is_null($request->imagedata)){
+        if (strlen($request->imagedata) > 3000){//何もcanvasになくてもちょっと送られてくるみたいなので・・・
+            $image = $request->imagedata;  // your base64 encoded
+            $image = str_replace('data:image/jpeg;base64,', '', $image);
+            $image = str_replace('data:image/png;base64,', '', $image);
+            $image = str_replace(' ', '+', $image);
+
+            $imageName = 'diary'.$targetRecId.'.jpg';
+            \File::put(public_path(). '/photos/diary/' . $imageName, base64_decode($image));
+        }
+
+        return redirect('/')->with('poststatus', '更新しました');
+
+    }
+
+    public function tweet_delete($rec_id)
+    {//-- 一言日記削除処理
+
+        $record = Tweet::findOrFail($rec_id);
+
+        $record->delete();
+
+        //-- 写真がある場合、削除 --
+        $targetFile = '/opt/home-management/www/public/photos/diary/diary'.$rec_id.'.jpg';
+        if (file_exists($targetFile)){
+            unlink($targetFile);
+        }
+
+        return redirect('/')->with('poststatus', 'データ(記録のみ)を削除しました');
+    }
+
+    public function tweet_hashtag_search()
+    {//-- ハッシュタグ検索画面
+        $hashtag = VwHashtagShow::orderBy('hashtag', 'asc')->get();
+        return view('records.tweets.search.search-tweet-hashtag', ['hashtags' => $hashtag]);
+    }
+    public function tweet_hashtag_search_exec(Request $request)
+    {//-- 検索処理＆結果表示
+        $search_word="#" . $request->hashtag_select. " ";
+
+        //$query = VwSearchResult::query();
+        $query = VwTweetShow::query();
+
+        $query->where('hashtag', 'like', "%$search_word%");
+
+        //$search_result = $query->orderBy('last_date', 'desc')->get();
+        $search_result = $query->orderBy('tweet_date', 'desc')->get();
+
+        $message = "(ハッシュタグ検索)";
+
+        return view('records.tweets.search.search-result', ['message'       => $message,
+                                                      'searched_word' => $search_word,
+                                                      'search_result' => $search_result]);
+    }
+
+    /**
+    * getTweetHashtagData
+    *
+    * 現在のハッシュタグ一覧をJSON形式で返す関数。
+    *
+    * 作成日
+    *   2022/08/01
+    *
+    * @param なし
+    * return array   値
+    */
+    public function getTweetHashtagData()
+    {//現在の(tweetsの)ハッシュタグ一覧をJSON形式で返す関数。
+
+       // ハッシュタグ一覧取得
+       $hashtags = VwHashtagShow::orderBy('hashtag', 'asc')->get();
+
+       foreach($hashtags as $hashtag){
+           $tags[]=$hashtag->hashtag;
+       }
+
+       $rtn_tags=array();
+       $rtn_tags['hashtag']    = $tags;
+
+       //print_r($rtn_tags);
+       //print_r($rtn_tags['hashtag']);
+       return [$rtn_tags];
+
+    }
+
+//-------- TODOリスト --------
+    public function hm_list()
+    {//--  TODO一覧表示
+        //$todo_show = VwTodoShow::orderBy('mission','desc')->paginate(10);
+        //$todo_cat = Category::orderBy('cat_id','asc')->paginate(10);
+        $todo_show = VwTodoShow::orderBy('flg_fin','asc')->orderBy('fin_until','asc')->orderBy('mission','asc')->get();
+        $todo_cat = Category::orderBy('cat_id','asc')->get();
+        return view('records.todos.todo-show', ['todo_shows' => $todo_show, 'todo_cats' => $todo_cat]);
+    }
+
+    //public function hm_list_store(Request $request)
+    public function hm_list_store(TodoRequest $request)
+    {//-- TODOリスト登録
+        //
+        $maxRecId = TodoList::max('rec_id');
+        $nextRecId = $maxRecId + 1;
+        $todo_savedata = [
+            'rec_id'      => $nextRecId,
+            'cat_id'      => $request->cat_id,
+            'mission'     => $request->todo_mission,
+            'flg_fin'     => 0,
+            'fin_until'   => $request->fin_until,
+            'rep_user_id' => Auth::id(),
+        ];
+
+        $db_data = new TodoList;
+        $db_data->fill($todo_savedata)->save();
+
+        return redirect('/hm_todo/list')->with('poststatus', '新規登録しました');
+
+    }
+
+    public function hm_list_update(Request $request)
+    {//-- TODOリスト更新
+
+        //-- TODOリストの更新 --
+        //---- 連想配列作成 ---
+        $todos=array();
+        $todos_rec_id=0;
+        $todos_cat_id=0;
+        $todos_mission="";
+        $todos_flg_fin=0;
+        $todos_fin_until="";
+        $todos_rep_user_id=0;
+        $counter=0;
+
+        foreach ($request->all() as $key => $val){
+            echo "<div>".$key."=>".$val."</div><br>";
+
+            if(strpos($key,'todo_rec_id') !== false){ 
+              //キーがID（rec_id）だった場合
+              $todos_rec_id = $val;
+            }
+            if(strpos($key,'todo_cat_id') !== false){ 
+              //キーがカテゴリID（cat_id）だった場合
+              $todos_cat_id = $val;
+            }
+            if(strpos($key,'todo_mission') !== false){ 
+              //キーがTODO内容（mission）だった場合
+              $todos_mission = $val;
+            }
+            if(strpos($key,'todo_flg_fin') !== false){ 
+              //キーが完了チェック（flg_fin）だった場合(値はonでしか来ない)
+              $todos_flg_fin = 1;
+            }
+            if(strpos($key,'todo_fin_until') !== false){ 
+              //キーがTODO期日（fin_until）だった場合
+              $todos_fin_until = $val;
+            }
+            if(strpos($key,'todo_user_id') !== false){ 
+              //キーが登録者ID（rep_user_id）だった場合
+              $todos_rep_user_id = $val;
+            }
+
+            if(strpos($key,'todo_br') !== false){ 
+              //キーが項目終了（br）だった場合
+              $todos[$counter] = array('rec_id'      => $todos_rec_id, 
+                                       'cat_id'      => $todos_cat_id, 
+                                       'mission'     => $todos_mission,
+                                       'flg_fin'     => $todos_flg_fin,
+                                       'fin_until'   => $todos_fin_until,
+                                       'rep_user_id' => $todos_rep_user_id);
+              $counter++;
+              $todos_rec_id=0;
+              $todos_cat_id=0;
+              $todos_mission="";
+              $todos_flg_fin=0;
+              $todos_fin_until="";
+              $todos_rep_user_id=0;
+              echo "-------<br>";
+            }
+        }
+        //var_dump($todos);
+
+        //-- 編集前のTODOデータ削除
+        TodoList::query()->delete();
+
+        //-- 今回編集データを新たに挿入
+        foreach ($todos as $todo){
+            $todo_savedata = [
+                'rec_id'      => $todo["rec_id"],
+                'cat_id'      => $todo["cat_id"],
+                'mission'      => $todo["mission"],
+                'flg_fin'      => $todo["flg_fin"],
+                'fin_until'      => $todo["fin_until"],
+                'rep_user_id'      => $todo["rep_user_id"],
+            ];
+
+            $db_data = new TodoList;
+            $db_data->fill($todo_savedata)->save();
+
+            print_r($todo_savedata);
+            echo "<br>";
+        }
+
+        return redirect('/hm_todo/list')->with('poststatus', 'リスト更新しました');
+
+    }
+
+    public function calendar_show()
+    {// カレンダー登録データ一覧
+        $calendars = VwCalendar::orderBy('start_date', 'desc')->paginate(20);
+        return view('records.calendars.calendar-show', ['calendars'            => $calendars,
+                             ]);
+
+    }
+
+
+//---  以下　検証用 --------------
+    public function chart_index()
+    {//グラフ検証
+       // ソート済みの配列を返す
+       $keys = ['家','研究室','外出','学内','長期不在'];
+       $counts = [10,4,3,2,1];
+
+       //-- 今月の天気 --
+       //$weather_report = VwDailyReport::get(['wea_date','max_temp'])->whereBetween('wea_date',['2021-01-01','2021-01-10']);
+       //$weather_report = VwDailyReport::get(['wea_date']);
+       $weather_report = VwDailyReport::whereBetween('wea_date',['2021-01-01','2021-04-30'])->get();
+       $weather_wea_date = VwDailyReport::get(['wea_date']);
+       $weather_max_temp = VwDailyReport::get(['max_temp']);
+       //$weather_max_temp = VwDailyReport::get(['max_temp']);
+       //$weather_report = VwDailyReport::where('wea_date',date("Y-m-d"))->get();
+
+       $wea_date=array();
+       $max_temp=array();
+       //print( $weather_report[0]->wea_date );
+       //var_dump( "$weather_report[1]->wea_date->format('m-d')");
+       //$test=2021-01-01;
+//       printf( "%s",$weather_report[0]['wea_date']);
+//       printf( "%s",$test);
+//       echo "<BR>";
+       foreach($weather_report as $weather_r){
+           //$weathers[]=$weather_r['max_temp'];
+           //$weathers['max_temp'][]=$weather_r['max_temp'];
+           //$weathers['date'][]=$weather_r['wea_date'];
+           $weathers['max_temp'][]=$weather_r->max_temp;
+           $weathers['min_temp'][]=$weather_r->min_temp;
+           $weathers['date'][]=$weather_r->wea_date;
+       }
+       echo json_encode($weathers);
+
+       //$queryresult = \DB::statement("CALL cooking.proc2(21)");
+       //echo $queryresult;
+
+//$str = "今日は晴天なり";
+//$t = new \MeCab\Tagger();
+//$m = explode("\n", $t->parse($str));
+//var_dump($m);
+
+
+       return view('labos.chart',compact('keys','counts'),['weather' => $weathers]);
+    }
+    public function speech_to_text_index()
+    {//音声入力検証
+       return view('labos.speech_to_text');
+    }
+    public function rows_index()
+    {//jQueryでの行追加削除検証
+       return view('labos.rows');
+    }
+    public function test_rows(Request $request)
+    {// rows_indexからPOSTされたものの確認
+      $count = $request['row_length'];
+      for($i=0; $i<$count; $i++)
+      {
+        $result[$i]['fluit'] = $request['fluit'][$i];
+        $result[$i]['quantity'] = $request['quantity'][$i];
+      }
+      echo print_r($result, true);
+    }
+    public function tweet_update_test($tweet_id)
+    {//一言日記更新テスト
+        $tweet = Tweet::where('rec_id',$tweet_id)->get();
+        return view('labos.tweet-update-test', ['tweet_data' => $tweet]);
+    }
+    public function line_test()
+    {//LINEテスト
+        //$tweet = Tweet::where('rec_id',$tweet_id)->get();
+        return view('labos.line');
+    }
+    public function game()
+    {//gameテスト
+        return view('games.challengepenchan.game');
+    }
+    public function game2()
+    {//gameテスト
+        return view('games.retrogamecafe.game');
+    }
+
+}

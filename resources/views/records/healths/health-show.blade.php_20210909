@@ -1,0 +1,79 @@
+@extends('layouts.common')
+
+@section('title', 'HomeManagement Web')
+@section('keywords', 'naoshi,yuko')
+@section('description', '山下家の情報一括管理')
+@section('pageCss')
+  <link href="/css/lightbox/photos-style.css" rel="stylesheet" type="text/css">
+  <link rel="stylesheet" href="/css/lightbox/lightbox.css">
+  <script src="/js/lightbox/lightbox-plus-jquery.min.js"></script>
+@endsection
+@include('section.head')
+
+@include('section.header')
+
+@section('content')
+<h5><a href='javascript:history.back()'>献立くん 食事記録</a></h5>
+<!--
+<div class="container row justify-content-start">
+-->
+    @if (session('poststatus'))
+        <div class="alert alert-success mt-4 mb-4">
+            {{ session('poststatus') }}
+        </div>
+    @endif
+
+<table class="border-table">
+    <tbody>
+        <tr class="">
+            <th rowspan=4 >日付</th>
+            <th colspan=2 class="thin">血圧(Hmg)</th>
+            <th rowspan=4 >体重(kg)</th>
+            <th rowspan=4 >歩数(歩)</th>
+            <th rowspan=4 >腹囲(cm)</th>
+        </tr>
+        <tr class="">
+            <th class="thin">朝</th>
+            <th class="thin">夜</th>
+        </tr>
+        <tr class="">
+            <th class="thin" >上</th>
+            <th class="thin" >上</th>
+        </tr>
+        <tr class="">
+            <th class="thin" >下</th>
+            <th class="thin" >下</th>
+        </tr>
+        @foreach ($days as $day) 
+        <tr class="">
+            <td rowspan=2 class="center v-middle">{{ date('m/d',strtotime($day)) }}({{ $healths[$day]['Week'] }})</td>
+            <td class="center v-middle"><div class="" contenteditable="true">{{ $healths[$day]['Kind1'] }}</div></td>
+            <td class="center v-middle"><div class="" contenteditable="true">{{ $healths[$day]['Kind3'] }}</div></td>
+            <td rowspan=2 class="center v-middle"><div class="" contenteditable="true">{{ $healths[$day]['Kind5'] }}</div></td>
+            <td rowspan=2 class="center v-middle"><div class="" contenteditable="true">{{ $healths[$day]['Kind6'] }}</div></td>
+            <td rowspan=2 class="center v-middle"><div class="" contenteditable="true">{{ $healths[$day]['Kind7'] }}</div></td>
+        </tr>
+        <tr class="">
+            <td class="center v-middle"><div class="" contenteditable="true">{{ $healths[$day]['Kind2'] }}</div></td>
+            <td class="center v-middle"><div class="" contenteditable="true">{{ $healths[$day]['Kind4'] }}</div></td>
+        </tr>
+        @endforeach
+          
+    </tbody>
+
+</table>
+
+<div class="col text-center">
+   <button type="submit" class="btn btn-primary btn-sm btn-block">
+       リスト更新
+   </button>
+   <br>
+   <a class="btn btn-secondary" href="javascript:history.back()">
+       更新せずに戻る
+   </a>
+   <p>
+</div>
+
+@endsection
+
+@include('section.footer')

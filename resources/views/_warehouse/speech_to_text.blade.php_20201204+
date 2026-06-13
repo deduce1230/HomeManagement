@@ -1,0 +1,67 @@
+@extends('layouts.common')
+ 
+@section('title', 'HomeManagement Web')
+@section('keywords', 'naoshi,yuko')
+@section('description', '山下家の情報一括管理')
+@include('section.head')
+ 
+@include('section.header')
+ 
+@section('content')
+
+<div class="container">
+    <h1 class="text-center h1">Web Speech API テスト</h1>
+    <div id="content">
+      <input type="textarea" id="voice_txt" name="q" size=60>
+      <a href="#" class="btn-real btn-real2" onclick="recording_start('voice_txt','mymic');">
+          <i id="mymic" class="fas fa-microphone"></i>
+      </a>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.3/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/js/bootstrap.min.js"></script>
+</div>
+
+<script language="javascript" type="text/javascript">
+    //-- マイク入力用スクリプト
+    function recording_start(area,mic_id){
+        // area:テキストのID　　mic_id:マイクボタンのID
+        var recognition = new webkitSpeechRecognition();
+        recognition.onresult = function(event) {
+          if (event.results.length > 0) {
+            document.getElementById(area).value = event.results[0][0].transcript;
+            recording_end(mic_id);
+          }
+        }
+        recording_start(mic_id);
+        recognition.start();
+    }
+
+    function recording_start(mic_id){
+       //-- 開始時、マイクボタンのfontawesomeを録音中に変える
+       toggle_mic(document.getElementById(mic_id));
+    }
+
+    function recording_end(mic_id){
+       //-- 終了時、マイクボタンのfontawesomeを通常時に変える
+       toggle_mic(document.getElementById(mic_id));
+    }
+
+    function toggle_mic(obj) {
+       //--fontawesome変更用
+       var icon = obj;
+       if (icon.classList.contains("fa-microphone")) {
+           icon.classList.remove("fa-microphone");
+           icon.classList.add("fa-microphone-alt");
+       } else {
+           icon.classList.remove("fa-microphone-alt");
+           icon.classList.add("fa-microphone");
+       }
+    }
+</script>
+
+@endsection
+ 
+@include('section.footer')
+
