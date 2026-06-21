@@ -446,8 +446,12 @@ class CookingHomeController extends Controller
 
     public function cooking_show()
     {//-- メニュー記録一覧表示
-        //$cooking_show = VwCookingShow::orderBy('meal_date','desc')->orderBy('virtual_id', 'desc')->paginate(10);
-        $cooking_show = VwCookingShow::orderBy('meal_date','desc')->orderBy('virtual_id', 'desc', 'eater_id', 'desc')->paginate(10);
+//        $cooking_show = VwCookingShow::orderBy('meal_date','desc')->orderBy('virtual_id', 'desc', 'eater_id', 'desc')->paginate(10);
+        $cooking_show = VwCookingShow::orderBy('meal_date','desc')
+            ->orderBy('meal_date','desc')
+            ->orderBy('virtual_id','desc')
+            ->orderBy('eater_id','desc')
+            ->paginate(10);
         return view('cookings.cook-show', ['cooking_shows' => $cooking_show]);
     }
     public function cooking_show_detail($recipe_id)
