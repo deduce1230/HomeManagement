@@ -17,13 +17,13 @@ Route::get('/', function () {
 });
 */
 Route::get('/', 'HomeController@index')->name('home');
-
+//Route::get('/', fn() => 'Laravel10 OK');
 /*
 |--------------------------------------------------------------------------
 | ログイン処理
 |--------------------------------------------------------------------------
  */
-Auth::routes();
+//Auth::routes();
 //Auth::routes([‘register’ => false]);
 
 /*
