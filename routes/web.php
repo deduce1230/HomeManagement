@@ -16,7 +16,8 @@ Route::get('/', function () {
     return view('home');
 });
 */
-Route::get('/', 'HomeController@index')->name('home');
+//Route::get('/', 'HomeController@index')->name('home');
+Route::get('/', 'HomeController@index');
 //Route::get('/', fn() => 'Laravel10 OK');
 /*
 |--------------------------------------------------------------------------
