@@ -407,7 +407,7 @@ class CookingHomeController extends Controller
         //$query->where(function($query) use($month_range_1,$month_range_2,$month_range_3){
         //        $query->where(DB::raw('to_char(last_date,\'mm\')'), '=', $month_range_1)
         //            ->orWhere(DB::raw('to_char(last_date,\'mm\')'), '=', $month_range_2)
-        //            ->orWhere(DB::raw('to_char(last_date,\'mm\')'), '=', $month_range_3);
+       
         //});
         $query->where(function($query) use($month_range_1,$month_range_2,$month_range_3){
             $query->whereRaw("to_char(last_date, 'mm') = ?", [$month_range_1])
@@ -798,7 +798,8 @@ class CookingHomeController extends Controller
        $keys = ['鶏肉','豚肉','牛肉','挽き肉','魚','一品もの','その他'];
 
        $raw_sql = "select * from cooking.tendency('".$date_s."','".$date_e."')";
-       $query_nm = DB::select(DB::raw($raw_sql));
+       //$query_nm = DB::select(DB::raw($raw_sql));
+       $query_nm = DB::select($raw_sql);
 
        $counts = [$query_nm[0]->chicken,$query_nm[0]->pork,$query_nm[0]->beef,$query_nm[0]->minced,
                   $query_nm[0]->fish,$query_nm[0]->ala_carte,$query_nm[0]->other];
